@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+dist/
+work/
+merged-manifests/
+runtime/
+ru-manifests/
+ru-manifests-all/
+RUKAMI/
+glossary/
+cache/
+*.zip
+*.dll
+*.pdb

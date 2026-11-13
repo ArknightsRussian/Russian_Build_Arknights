@@ -1,0 +1,13 @@
+﻿{
+  "version": "1.0.40",
+  "python": "C:\\Users\\USER\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+  "pluginProject": "plugin\\ArknightsLocalization.RichTextFix.csproj",
+  "pluginDll": "dist\\ArknightsLocalization.RichTextFix.dll",
+  "game": "C:\\Path\\To\\Arknights_EN",
+  "gameInterop": "C:\\Path\\To\\Arknights_EN\\BepInEx\\interop",
+  "manifests": "merged-manifests",
+  "packOutput": "work/en-ru-pack-merged",
+  "dist": "dist",
+  "configFile": "runtime/en-ru-test/BepInEx/config/AutoTranslatorConfig.ini",
+  "fontFile": "runtime/sharedassets1.assets"
+}
