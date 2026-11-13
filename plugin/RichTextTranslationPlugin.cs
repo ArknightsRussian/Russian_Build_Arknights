@@ -57,6 +57,14 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         @"\A(?:DPS|Support|Healing|Defense|Survival|AoE|Crowd-Control|Debuff|Nuker|Tank|Slow|Shift|Summon|Recovery)\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    // The game appends progress counters and stock counts to an already
+    // localized label at runtime ("Path x20", "Zone(0/2)", "(0/1)"). The pack
+    // only holds the base string, so split the suffix off, translate the base
+    // and glue the untouched suffix back on.
+    private static readonly Regex RuntimeSuffix = new(
+        @"(?<suffix>\s*(?:\(\s*\d+(?:\s*/\s*\d+)?\s*\)|[x×]\s*\d+))\z",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
     public override void Load()
     {
         DebugTextLog.Configure(Config, Log);
@@ -312,6 +320,8 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             {
                 scoped = ComponentContext.Lookup(context.Component, original, false);
                 if (scoped != null) ApplyTranslation(context, original, OfficialRichStyles.Restore(original, scoped, _ => null));
+                else if (TryTranslateWithRuntimeSuffix(active, original, out string suffixed))
+                    ApplyTranslation(context, original, suffixed);
             }
             return;
         }
@@ -362,6 +372,9 @@ public sealed class RichTextTranslationPlugin : BasePlugin
 
         if (string.IsNullOrWhiteSpace(translation))
             translation = ComponentContext.Lookup(context.Component, original, false);
+        if (string.IsNullOrWhiteSpace(translation)
+            && TryTranslateWithRuntimeSuffix(current, original, out string runtimeSuffixTranslation))
+            translation = runtimeSuffixTranslation;
 
         if (!string.IsNullOrWhiteSpace(translation))
         {
@@ -487,6 +500,45 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool ShowWindowAsync(IntPtr window, int command);
+
+    private static bool TrySplitRuntimeSuffix(string text, out string baseText, out string suffix)
+    {
+        baseText = text;
+        suffix = "";
+        Match match = RuntimeSuffix.Match(text);
+        if (!match.Success || match.Index == 0)
+        {
+            return false;
+        }
+        baseText = text.Substring(0, match.Index).TrimEnd();
+        suffix = match.Groups["suffix"].Value;
+        return baseText.Length > 0;
+    }
+
+    private bool TryTranslateWithRuntimeSuffix(ITranslator active, string original,
+        out string translation)
+    {
+        translation = "";
+        if (!TrySplitRuntimeSuffix(original, out string baseText, out string suffix))
+        {
+            return false;
+        }
+        string? value = DynamicTranslations.LookupAny(baseText);
+        if (string.IsNullOrWhiteSpace(value)
+            && active.TryTranslate(baseText, out string baseTranslation)
+            && !string.IsNullOrWhiteSpace(baseTranslation) && baseTranslation != baseText)
+        {
+            value = baseTranslation;
+        }
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+        char first = suffix.TrimStart()[0];
+        bool needsSpace = value[value.Length - 1] is not (' ' or '(' or '[') && char.IsLetterOrDigit(first);
+        translation = needsSpace ? value + " " + suffix.TrimStart() : value + suffix;
+        return true;
+    }
 
     private static bool TryTranslateSargonAgreement(string text, out string translation)
     {

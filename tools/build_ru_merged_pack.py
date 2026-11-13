@@ -415,6 +415,67 @@ def apply_context_terms(merged: dict[str, str]) -> int:
     return changed
 
 
+ANGLE_TERMS_FILE = ROOT / "tools" / "angle_terms.json"
+ANGLE_TERM_RE = re.compile(r"<([^<>\r\n]{1,120})>")
+ANGLE_SKIP = {"alpha", "align", "b", "br", "color", "cspace", "font", "i", "indent",
+              "line-height", "line-indent", "link", "lowercase", "mark", "material",
+              "margin", "mspace", "nobr", "noparse", "page", "pos", "rotate", "s",
+              "size", "smallcaps", "space", "sprite", "style", "sub", "sup", "u",
+              "uppercase", "voffset", "width"}
+NOPARSE_RE = re.compile(r"(<noparse>.*?</noparse>)", re.IGNORECASE | re.DOTALL)
+ANGLE_TERMS: dict[str, str] = {}
+ANGLE_TERMS_FOLDED: dict[str, str] = {}
+
+
+def _angle_term_repl(match: re.Match[str]) -> str:
+    term = match.group(1)
+    key = term.strip()
+    if not key or key[0] in "@$#/" or "=" in key:
+        return match.group(0)
+    if key.lower() in ANGLE_SKIP:
+        return match.group(0)
+    translated = ANGLE_TERMS.get(key) or ANGLE_TERMS_FOLDED.get(key.casefold())
+    if not translated or translated == key:
+        return match.group(0)
+    lead = term[:len(term) - len(term.lstrip())]
+    trail = term[len(term.rstrip()):]
+    return f"<{lead}{translated}{trail}>"
+
+
+def _translate_angle_terms(text: str) -> str:
+    parts = NOPARSE_RE.split(text)
+    for index in range(0, len(parts), 2):  # even offsets are outside <noparse>
+        parts[index] = ANGLE_TERM_RE.sub(_angle_term_repl, parts[index])
+    return "".join(parts)
+
+
+def apply_angle_terms(merged: dict[str, str]) -> int:
+    """Translate the words inside bare ``<Term>`` references in values.
+
+    The game renders those references as literal text, not as rich-text tags,
+    so the content must be localized separately. Only values are touched; the
+    English keys stay byte-identical for XUnity lookup.
+    """
+    global ANGLE_TERMS, ANGLE_TERMS_FOLDED
+    if not ANGLE_TERMS_FILE.is_file():
+        print("angle terms missing:", ANGLE_TERMS_FILE)
+        ANGLE_TERMS, ANGLE_TERMS_FOLDED = {}, {}
+        return 0
+    data = json.loads(ANGLE_TERMS_FILE.read_text(encoding="utf-8"))
+    ANGLE_TERMS = {str(k): str(v) for k, v in data.items()}
+    ANGLE_TERMS_FOLDED = {k.casefold(): v for k, v in ANGLE_TERMS.items()}
+    changed = 0
+    for key, value in merged.items():
+        if "<" not in value:
+            continue
+        new_value = _translate_angle_terms(value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    print(f"angle terms: {changed} values rewritten, glossary {len(ANGLE_TERMS)} entries")
+    return changed
+
+
 VOICE_KEYS_FILE = ROOT / "tools" / "voice_line_keys.json"
 VOICE_TOKEN_RE = re.compile(
     r"(?:\{[^{}]*\}|<[^<>]*>)[,.;:!?…»)\]]*|\S+")
@@ -548,6 +609,7 @@ def source_fingerprint() -> str:
     _feed_file(digest, TSV)
     _feed_file(digest, Path(__file__))
     _feed_file(digest, ROOT / "tools" / "name_variants.json")
+    _feed_file(digest, ROOT / "tools" / "angle_terms.json")
     _feed_file(digest, VOICE_KEYS_FILE)
     for path in sorted(FILL_DIR.glob("ru_fill_*.json")):
         _feed_file(digest, path)
@@ -642,6 +704,9 @@ def main() -> int:
     # Re-attach the game's inline rich-text tags (value highlights, status
     # tooltips like <$ba.stun>Stunning</>). Old RU sources dropped them all.
     apply_rich_tags(merged)
+
+    # Translate the bare <Term> references the game renders as literal text.
+    apply_angle_terms(merged)
 
     # Drop junk "translations" that were never display strings: they are raw
     # story directive fragments whose value was a cosmetic rewrite. Keeping
