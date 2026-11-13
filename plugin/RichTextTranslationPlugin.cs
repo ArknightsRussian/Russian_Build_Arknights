@@ -38,6 +38,8 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     private int firstCommentedTextErrorLogged;
     private int firstCommentedTextCastMissLogged;
     private int firstCommentedTextProbeLogged;
+    private readonly HashSet<string> reportedScoreLabels = new();
+    private readonly HashSet<string> reportedBareTags = new();
 
     private static readonly Regex BreakTag = new(
         @"<br\s*/?>",
@@ -50,6 +52,10 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     private static readonly Regex RuntimeNumber = new(
         @"\A[0-9]+(?:\.[0-9]+)?\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex BareTag = new(
+        @"\A(?:DPS|Support|Healing|Defense|Survival|AoE|Crowd-Control|Debuff|Nuker|Tank|Slow|Shift|Summon|Recovery)\z",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     public override void Load()
     {
@@ -157,6 +163,8 @@ public sealed class RichTextTranslationPlugin : BasePlugin
 
     private void ApplyTranslation(ComponentTranslationContext context, string original, string text)
     {
+        if (text == "Счёт" && reportedScoreLabels.Add(original))
+            Log.LogInfo($"[tags] 'Счёт' for original '{original}' on {context.Component?.GetType().FullName ?? "?"}");
         if (text.Contains("<@") || text.Contains("<$"))
         {
             if (TrySetCommentedText(context, original, text)) return;
@@ -220,6 +228,8 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         if (DebugTextLog.Enabled) DebugTextLog.Write(context);
 
         string? role = ComponentFields.Role(context.Component);
+        if (role == null && BareTag.IsMatch(original.Trim()) && reportedBareTags.Add(original.Trim()))
+            Log.LogInfo($"[tags] bare tag '{original.Trim()}' on {context.Component?.GetType().FullName ?? "?"}");
         if (role == "identity")
         {
             context.IgnoreComponent();
