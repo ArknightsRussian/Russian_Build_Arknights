@@ -18,6 +18,19 @@ internal static class RichTextStyleRestorer
     private static readonly HashSet<string> Standalone = new(StringComparer.OrdinalIgnoreCase)
         { "br", "sprite", "space", "page" };
 
+    // Frequently highlighted intensity adverbs (pull/push/slow descriptions).
+    // They have no standalone XUnity key, so lookup() cannot map the source
+    // word to its Russian equivalent; without this the span is dropped.
+    private static readonly Dictionary<string, string> TermHints = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["moderately"] = "умеренно",
+        ["greatly"] = "сильно",
+        ["slightly"] = "слегка",
+        ["arts damage"] = "урона Искусством",
+        ["physical damage"] = "физического урона",
+        ["true damage"] = "истинного урона",
+    };
+
     private sealed class SpanStyle
     {
         internal string Name = "", Open = "", Close = "";
@@ -63,6 +76,9 @@ internal static class RichTextStyleRestorer
                 continue;
             }
             string? translated = lookup(fragment);
+            if (string.IsNullOrWhiteSpace(translated)
+                && TermHints.TryGetValue(fragment.Trim(), out string? hint))
+                translated = hint;
             if (!string.IsNullOrWhiteSpace(translated)
                 && TryPlace(source.Plain, fragment, PlainText(translated).Trim(), translation, style, placements)) continue;
             if (TryPlace(source.Plain, fragment, fragment, translation, style, placements)) continue;

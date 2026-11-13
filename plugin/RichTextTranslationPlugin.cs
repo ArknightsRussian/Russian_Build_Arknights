@@ -330,13 +330,17 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             return;
         }
 
-        string? translation = null;
-        if (current.TryTranslate(plain, out string wholeTranslation)
+        // Authored templates carry the CN highlight tags, while XUnity's pack
+        // stores tag-stripped values. Prefer the authored target so restored
+        // skill descriptions keep every <@ba.*> highlight (e.g. "moderately").
+        string? translation = DynamicTranslations.LookupAny(plain);
+        if (string.IsNullOrWhiteSpace(translation)
+            && current.TryTranslate(plain, out string wholeTranslation)
             && !string.IsNullOrWhiteSpace(wholeTranslation))
         {
             translation = wholeTranslation;
         }
-        else if (TryTranslateSargonAgreement(plain, out string sargonTranslation))
+        else if (string.IsNullOrWhiteSpace(translation) && TryTranslateSargonAgreement(plain, out string sargonTranslation))
         {
             // Sargon's in-battle description is the only current agreement
             // that formats a stack-dependent duration before assigning the
@@ -346,7 +350,8 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             // without relaxing fragment fallback for any other component.
             translation = sargonTranslation;
         }
-        else if (containsLineBreak && TryTranslateLines(current, plain, out string lineTranslation))
+        else if (string.IsNullOrWhiteSpace(translation) && containsLineBreak
+            && TryTranslateLines(current, plain, out string lineTranslation))
         {
             // Operator tags and module-enhanced traits are assembled into one
             // TMP component from independently translated data fields. Fall
@@ -355,8 +360,6 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             translation = lineTranslation;
         }
 
-        if (string.IsNullOrWhiteSpace(translation))
-            translation = DynamicTranslations.LookupAny(plain);
         if (string.IsNullOrWhiteSpace(translation))
             translation = ComponentContext.Lookup(context.Component, original, false);
 
