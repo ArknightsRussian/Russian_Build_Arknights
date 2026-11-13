@@ -23,6 +23,7 @@ XUnity-пак текста, контекстный словарь RichTextFix, �
 | `tools/contract_test.py` | Проверка целостности пака. |
 | `arklocalizer/` | Сборщик XUnity-пака (`build-custom-pack`). |
 | `plugin/` | Исходники C#-плагина RichTextFix. |
+| `docs/PLUGIN_README_RU.md` | Русский перевод документации плагина (шрифты, rich-текст, контекст, сборка). |
 
 ## Чего в репозитории нет
 
