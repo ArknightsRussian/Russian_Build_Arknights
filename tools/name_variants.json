@@ -2,6 +2,21 @@
  "_readme": "Regex rewrites applied to every translation value after all sources are merged. They fix established mistranslations of character names that the AI produced in different declensions. Cyrillic lookarounds emulate word boundaries (Python \\b does not work with Cyrillic).",
  "rules": [
   {
+   "pattern": "Тересас Фантом",
+   "replace": "Фантом Терезы",
+   "note": "Theresa's Phantom: Russian genitive"
+  },
+  {
+   "pattern": "Лунгмэнка",
+   "replace": "Лунмэнька",
+   "note": "Lungmenite demonym follows Lungmen"
+  },
+  {
+   "pattern": "Дублиннн",
+   "replace": "Дублин",
+   "note": "Dublinn: remove the triple-n artifact"
+  },
+  {
    "pattern": "(?<![А-Яа-яЁё])Клоужер(ом|а|у|е)?(?![А-Яа-яЁё])",
    "replace": "Кложур\\1",
    "note": "Closure: most common AI variant"
@@ -125,6 +140,16 @@
    "pattern": "Дук'араэл",
    "replace": "Дюкараил",
    "note": "Duq'arael: glossary spelling"
+  },
+  {
+   "pattern": "Дублиннск",
+   "replace": "Дублинск",
+   "note": "Dublinn adjective"
+  },
+  {
+   "pattern": "Дублиннц",
+   "replace": "Дублинц",
+   "note": "Dublinn demonym"
   }
  ]
 }

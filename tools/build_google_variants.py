@@ -113,12 +113,19 @@ def form_map(old_cls: str, new_cls: str) -> dict[str, str]:
     new_endings = dict(zip(CASES, PARADIGMS[new_cls][2]))
     if new_cls == "adj":
         new_endings["nom_sg"] = "ADJ_NOM"
-        new_endings["acc_sg"] = "ADJ_NOM"
+        # Animate masculine accusative is identical to the genitive
+        # ("Морерождённого"), which is how the glossary names are used.
+        new_endings["acc_sg"] = new_endings["gen_sg"]
     result: dict[str, str] = {}
     for old_ending, cases in ending_map(old_cls).items():
         targets = {new_endings[case] for case in cases if case in new_endings}
         if len(targets) == 1:
             result[old_ending] = targets.pop()
+    # Velar stems take "-и" in the nominative plural ("Исповедники"),
+    # although the dictionary ending is "-ы".
+    if old_cls.startswith("masc") and new_cls.startswith("masc") \
+            and "и" not in result:
+        result["и"] = new_endings["nom_pl"]
     return result
 
 
@@ -157,9 +164,10 @@ def rename_rules(old: str, new: str) -> list[tuple[str, str, str]] | None:
     new_stem = new[:-new_strip] if new_strip else new
     new_endings = dict(zip(CASES, PARADIGMS[new_cls][2]))
     if new_cls == "adj":
-        # An adjective lemma keeps its own suffix in the nominative.
+        # An adjective lemma keeps its own suffix in the nominative; the
+        # animate accusative follows the genitive.
         new_endings["nom_sg"] = new[-2:]
-        new_endings["acc_sg"] = new[-2:]
+        new_endings["acc_sg"] = new_endings["gen_sg"]
     result: list[tuple[str, str, str]] = []
     for old_ending, cases in ending_map(old_cls).items():
         targets = {new_endings[case] for case in cases if case in new_endings}
@@ -169,6 +177,12 @@ def rename_rules(old: str, new: str) -> list[tuple[str, str, str]] | None:
         pattern = (r"(?<![А-Яа-яЁё])" + re.escape(old_stem) +
                    re.escape(old_ending) + r"(?![А-Яа-яЁё])")
         result.append((pattern, new_stem + new_ending, old_ending or "nom_sg"))
+    # Velar stems take "-и" in the nominative plural ("Исповедники").
+    if old_cls.startswith("masc") and new_cls.startswith("masc") \
+            and not any(form == "и" for _, _, form in result):
+        pattern = (r"(?<![А-Яа-яЁё])" + re.escape(old_stem) +
+                   r"и(?![А-Яа-яЁё])")
+        result.append((pattern, new_stem + new_endings["nom_pl"], "и"))
     return result
 
 
