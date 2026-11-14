@@ -408,7 +408,36 @@ def load_merged(manifest_dir: Path) -> tuple[dict[str, str], Counter, list]:
         skipped["story_tsv_applied"] = n
     renamed = _apply_google_renames(merged, manifest_dir.parent)
     skipped["google_renames"] = renamed
+    skipped["reunion_renames"] = _apply_reunion_rename(merged, manifest_dir.parent)
     return merged, skipped, conflicts
+
+
+def _apply_reunion_rename(merged: dict[str, str], root: Path) -> int:
+    """Rename the Reunion faction in override values appended after the build.
+
+    ``ru-overrides/*.json`` and the story TSV are applied on top of the
+    manifests, so the manifest-side rewrite in ``tools/build_ru_merged_pack.py``
+    never sees them.  Load the same agreement-aware rewriter and run it again.
+    """
+    module_path = root / "tools" / "reunion_rename.py"
+    if not module_path.is_file():
+        return 0
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_reunion_rename", module_path)
+    if spec is None or spec.loader is None:
+        return 0
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    changed = 0
+    for key, value in merged.items():
+        if not isinstance(value, str) or "Реюнион" not in value:
+            continue
+        new_value = module.rewrite(value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    return changed
 
 
 def build_custom_pack(manifest_dir: Path, output_root: Path) -> dict[str, Any]:

@@ -28,6 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FRIEND = Path(r"D:\ARKRUBUILD2")
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools"))
 
 from arklocalizer.custom_pack import (  # noqa: E402
     HAN_RE, MACRO_RE, _canon_source, _extract_pairs, _macro_tokens,
@@ -562,6 +563,27 @@ def apply_google_variants(merged: dict[str, str]) -> int:
     return changed
 
 
+def apply_reunion_rename(merged: dict[str, str]) -> int:
+    """Rename the Reunion faction to the neuter canon "Воссоединение".
+
+    The name change also requires neuter verb agreement ("Реюнион был" ->
+    "Воссоединение было") and genitive appositions ("движение Реюнион" ->
+    "движение Воссоединения"); see ``tools/reunion_rename.py``.
+    """
+    from reunion_rename import rewrite
+
+    changed = 0
+    for key, value in merged.items():
+        if not isinstance(value, str) or "Реюнион" not in value:
+            continue
+        new_value = rewrite(value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    print(f"reunion rename: {changed} values rewritten")
+    return changed
+
+
 def apply_quotes(merged: dict[str, str]) -> int:
     """Collapse accidentally doubled Russian quotation marks."""
     changed = 0
@@ -839,6 +861,10 @@ def main() -> int:
     # Rename established names inside sentences last, so terms that were just
     # translated from the <...> glossary get the canonical spelling as well.
     apply_google_variants(merged)
+
+    # The canonical faction name is the neuter "Воссоединение"; fix the verb
+    # and modifier agreement that the old masculine name left behind.
+    apply_reunion_rename(merged)
 
     # Collapse accidentally doubled Russian quotation marks.
     quotes_fixed = apply_quotes(merged)
