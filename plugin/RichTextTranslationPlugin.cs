@@ -65,6 +65,13 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         @"(?<suffix>\s*(?:\(\s*\d+(?:\s*/\s*\d+)?\s*\)|[x×]\s*\d+))\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    // The game prefixes list rows with a bullet of its own. Medals use "- ",
+    // missions and enemy resistances use "·"/"•". The bullet is presentation,
+    // not part of the data key.
+    private static readonly Regex LeadingBullet = new(
+        @"\A(?<prefix>\s*[-–—•·]\s+)(?<body>.+)\z",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
+
     public override void Load()
     {
         DebugTextLog.Configure(Config, Log);
@@ -318,6 +325,33 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             || BreakTag.IsMatch(original);
         if (!containsMarkup && !containsLineBreak)
         {
+            // List rows (enemy resistances, medal conditions, mission rewards)
+            // reach the component with a generated bullet in front of the data
+            // string, so neither XUnity nor the template index matches the key.
+            // Look the body up and glue the untouched bullet back on.
+            Match bullet = LeadingBullet.Match(original);
+            if (bullet.Success)
+            {
+                string prefix = bullet.Groups["prefix"].Value;
+                string body = bullet.Groups["body"].Value;
+                string? bodyTranslation = DynamicTranslations.LookupAny(body)
+                    ?? ComponentContext.Lookup(context.Component, body, false);
+                ITranslator? bulletTranslator = translator;
+                if (bodyTranslation == null && bulletTranslator != null)
+                {
+                    if (bulletTranslator.TryTranslate(body, out string bodyExact) && bodyExact != body)
+                        bodyTranslation = bodyExact;
+                    else if (TryTranslateWithRuntimeSuffix(bulletTranslator, body, out string bodySuffixed))
+                        bodyTranslation = bodySuffixed;
+                }
+                if (bodyTranslation != null)
+                {
+                    ApplyTranslation(context, original,
+                        prefix + OfficialRichStyles.Restore(body, bodyTranslation, _ => null));
+                    return;
+                }
+            }
+
             // Some game paths resolve/remove data macros before assigning the
             // component. The exact CN target still carries the lost style.
             ITranslator? active = translator;

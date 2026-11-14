@@ -409,7 +409,31 @@ def load_merged(manifest_dir: Path) -> tuple[dict[str, str], Counter, list]:
     renamed = _apply_google_renames(merged, manifest_dir.parent)
     skipped["google_renames"] = renamed
     skipped["reunion_renames"] = _apply_reunion_rename(merged, manifest_dir.parent)
+    skipped["ui_short_rewrites"] = _apply_ui_short(merged, manifest_dir.parent)
     return merged, skipped, conflicts
+
+
+def _apply_ui_short(merged: dict[str, str], root: Path) -> int:
+    """Run the short-UI rewrites on values appended after the manifest build."""
+    module_path = root / "tools" / "ui_short.py"
+    if not module_path.is_file():
+        return 0
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_ui_short", module_path)
+    if spec is None or spec.loader is None:
+        return 0
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    changed = 0
+    for key, value in merged.items():
+        if not isinstance(value, str):
+            continue
+        new_value = module.rewrite(value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    return changed
 
 
 def _apply_reunion_rename(merged: dict[str, str], root: Path) -> int:

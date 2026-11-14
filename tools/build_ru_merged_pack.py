@@ -584,6 +584,21 @@ def apply_reunion_rename(merged: dict[str, str]) -> int:
     return changed
 
 
+def apply_ui_short(merged: dict[str, str]) -> int:
+    """Apply the narrow short-UI rewrites from ``tools/ui_short.py``."""
+    from ui_short import rewrite
+
+    changed = 0
+    for key, value in merged.items():
+        if not isinstance(value, str):
+            continue
+        new_value = rewrite(value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    return changed
+
+
 def apply_quotes(merged: dict[str, str]) -> int:
     """Collapse accidentally doubled Russian quotation marks."""
     changed = 0
@@ -865,6 +880,11 @@ def main() -> int:
     # The canonical faction name is the neuter "Воссоединение"; fix the verb
     # and modifier agreement that the old masculine name left behind.
     apply_reunion_rename(merged)
+
+    # Short UI labels (enemy resistance row, promotion label, base tabs, ...)
+    # and the neural-network/Mon3tr/L.G.D. canon.
+    ui_short_changed = apply_ui_short(merged)
+    print(f"short UI rewrites: {ui_short_changed} values, total {len(merged)}")
 
     # Collapse accidentally doubled Russian quotation marks.
     quotes_fixed = apply_quotes(merged)
