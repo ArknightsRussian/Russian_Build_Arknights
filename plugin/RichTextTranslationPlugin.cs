@@ -173,6 +173,14 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     {
         if (text == "Счёт" && reportedScoreLabels.Add(original))
             Log.LogInfo($"[tags] 'Счёт' for original '{original}' on {context.Component?.GetType().FullName ?? "?"}");
+        // A few pack entries kept a double-escaped newline; the client would
+        // print the two characters "\n" instead of breaking the line.
+        if (text.Contains("\\n", StringComparison.Ordinal) || text.Contains("\\r", StringComparison.Ordinal))
+        {
+            text = text.Replace("\\r\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\n", "\n", StringComparison.Ordinal)
+                .Replace("\\r", "\n", StringComparison.Ordinal);
+        }
         if (text.Contains("<@") || text.Contains("<$"))
         {
             if (TrySetCommentedText(context, original, text)) return;

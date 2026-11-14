@@ -1,85 +1,130 @@
 {
-  "_readme": "Regex rewrites applied to every translation value after all sources are merged. They fix established mistranslations of character names that the AI produced in different declensions. Cyrillic lookarounds emulate word boundaries (Python \\b does not work with Cyrillic).",
-  "rules": [
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоужер(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1",
-      "note": "Closure: most common AI variant"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоужур(ом|а|у|е|ой)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоужр(?![А-Яа-яЁё])",
-      "replace": "Кложур"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоужи(?![А-Яа-яЁё])",
-      "replace": "Кложур"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоузи(?![А-Яа-яЁё])",
-      "replace": "Кложур"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоуж(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1",
-      "note": "Closure: truncated variant"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоузер(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клоуз(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клозур(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Клозер(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Кложер(ом|а|у|е)?(?![А-Яа-яЁё])",
-      "replace": "Кложур\\1"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Кложа(?![А-Яа-яЁё])",
-      "replace": "Кложур"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Шиоппы(?![А-Яа-яЁё])",
-      "replace": "Вия",
-      "note": "Viy / Scioppa: genitive"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])Шиоппа(?![А-Яа-яЁё])",
-      "replace": "Вий",
-      "note": "Viy / Scioppa: nominative and other cases"
-    },
-    {
-      "pattern": "(?<![А-Яа-яЁё])В contrast(?![А-Яа-яЁё])",
-      "replace": "Напротив",
-      "note": "AI left the English discourse marker"
-    },
-    {
-      "pattern": "(?<![A-Za-z])Reunion(?![A-Za-z])",
-      "replace": "Реюнион",
-      "note": "Latin faction name left in RU values"
-    },
-    {
-      "pattern": "(?<![A-Za-z])Grypherburg(?![A-Za-z])",
-      "replace": "Грифербург",
-      "note": "Latin city name left in RU values"
-    },
-    {
-      "pattern": "Плиты грёз",
-      "replace": "Плиты снов",
-      "note": "Dream Tiles: align with the existing achievement wording"
-    }
-  ]
+ "_readme": "Regex rewrites applied to every translation value after all sources are merged. They fix established mistranslations of character names that the AI produced in different declensions. Cyrillic lookarounds emulate word boundaries (Python \\b does not work with Cyrillic).",
+ "rules": [
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоужер(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1",
+   "note": "Closure: most common AI variant"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоужур(ом|а|у|е|ой)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоужр(?![А-Яа-яЁё])",
+   "replace": "Кложур"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоужи(?![А-Яа-яЁё])",
+   "replace": "Кложур"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоузи(?![А-Яа-яЁё])",
+   "replace": "Кложур"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоуж(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1",
+   "note": "Closure: truncated variant"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоузер(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клоуз(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клозур(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Клозер(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Кложер(ом|а|у|е)?(?![А-Яа-яЁё])",
+   "replace": "Кложур\\1"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Кложа(?![А-Яа-яЁё])",
+   "replace": "Кложур"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Шиоппы(?![А-Яа-яЁё])",
+   "replace": "Вия",
+   "note": "Viy / Scioppa: genitive"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])Шиоппа(?![А-Яа-яЁё])",
+   "replace": "Вий",
+   "note": "Viy / Scioppa: nominative and other cases"
+  },
+  {
+   "pattern": "(?<![А-Яа-яЁё])В contrast(?![А-Яа-яЁё])",
+   "replace": "Напротив",
+   "note": "AI left the English discourse marker"
+  },
+  {
+   "pattern": "(?<![A-Za-z])Reunion(?![A-Za-z])",
+   "replace": "Реюнион",
+   "note": "Latin faction name left in RU values"
+  },
+  {
+   "pattern": "(?<![A-Za-z])Grypherburg(?![A-Za-z])",
+   "replace": "Грифербург",
+   "note": "Latin city name left in RU values"
+  },
+  {
+   "pattern": "Плиты грёз",
+   "replace": "Плиты снов",
+   "note": "Dream Tiles: align with the existing achievement wording"
+  },
+  {
+   "pattern": "<Тропа>",
+   "replace": "<Путь>",
+   "note": "RA3 Path node type canonical"
+  },
+  {
+   "pattern": "Кложурой",
+   "replace": "Клоужерой",
+   "note": "Closure: feminine instrumental form kept from the older wording"
+  },
+  {
+   "pattern": "Бабелью",
+   "replace": "Вавилоном",
+   "note": "Babel: feminine instrumental used in older text"
+  },
+  {
+   "pattern": "Черагандр",
+   "replace": "Кьерагандр",
+   "note": "Kjeragandr: transliteration follows Kjerag"
+  },
+  {
+   "pattern": "Черагск",
+   "replace": "Кьерагск",
+   "note": "Kjerag adjective"
+  },
+  {
+   "pattern": "Къераг",
+   "replace": "Кьераг",
+   "note": "Kjerag: transliteration follows the glossary"
+  },
+  {
+   "pattern": "Лунгмэнск",
+   "replace": "Лунмэньск",
+   "note": "Lungmen adjective"
+  },
+  {
+   "pattern": "Лунгмэнц",
+   "replace": "Лунмэньц",
+   "note": "Lungmen demonym"
+  },
+  {
+   "pattern": "Дук'араэл",
+   "replace": "Дюкараил",
+   "note": "Duq'arael: glossary spelling"
+  }
+ ]
 }

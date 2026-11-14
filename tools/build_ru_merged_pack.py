@@ -454,7 +454,9 @@ def apply_angle_terms(merged: dict[str, str]) -> int:
 
     The game renders those references as literal text, not as rich-text tags,
     so the content must be localized separately. Only values are touched; the
-    English keys stay byte-identical for XUnity lookup.
+    English keys stay byte-identical for XUnity lookup. A standalone
+    ``<Term>`` key is added as well: the runtime style restorer looks the whole
+    bracketed fragment up when it re-applies ``<@lv.*>`` colours.
     """
     global ANGLE_TERMS, ANGLE_TERMS_FOLDED
     if not ANGLE_TERMS_FILE.is_file():
@@ -472,7 +474,124 @@ def apply_angle_terms(merged: dict[str, str]) -> int:
         if new_value != value:
             merged[key] = new_value
             changed += 1
-    print(f"angle terms: {changed} values rewritten, glossary {len(ANGLE_TERMS)} entries")
+    keyed = 0
+    for term, translated in ANGLE_TERMS.items():
+        if translated == term or not term or term[0] in "@$#":
+            continue
+        source = f"<{term}>"
+        if source in merged:
+            continue
+        merged[source] = f"<{translated}>"
+        keyed += 1
+    print(f"angle terms: {changed} values rewritten, {keyed} standalone keys, "
+          f"glossary {len(ANGLE_TERMS)} entries")
+    return changed
+
+
+GOOGLE_GLOSSARY_FILE = ROOT / "tools" / "google_glossary.json"
+GOOGLE_VARIANTS_FILE = ROOT / "tools" / "google_variants.json"
+GOOGLE_QUOTES = "'\"“”‘’«»"
+GOOGLE_WORD_RE = re.compile(r"[А-Яа-яЁё]+")
+
+
+def _dequote_google(value: str) -> str:
+    return value.strip().strip(GOOGLE_QUOTES).strip()
+
+
+def apply_google_glossary(merged: dict[str, str]) -> int:
+    """Make the community spreadsheet the final say for standalone keys.
+
+    The spreadsheet is the canonical glossary: when it names a key differently
+    from the older translation, the spreadsheet wins.  Values keep their
+    spelling including the quotation marks the sheet uses for titles.
+    """
+    if not GOOGLE_GLOSSARY_FILE.is_file():
+        print("google glossary missing:", GOOGLE_GLOSSARY_FILE)
+        return 0
+    data = json.loads(GOOGLE_GLOSSARY_FILE.read_text(encoding="utf-8"))
+    changed = 0
+    for latin, target in data.items():
+        for key in (latin, _dequote_google(latin)):
+            if key and key in merged and merged[key] != target:
+                merged[key] = target
+                changed += 1
+                break
+    print(f"google glossary exact keys: {changed} rewritten of {len(data)} entries")
+    return changed
+
+
+def apply_google_variants(merged: dict[str, str]) -> int:
+    """Rename established names inside sentences, preserving every case.
+
+    Rules come from ``tools/build_google_variants.py``: one rule per
+    grammatical form, so the endings (and therefore case and gender agreement)
+    of the surrounding sentence stay intact.  Rules are dispatched by a trigger
+    stem so only the few values that mention a renamed name are touched.
+    """
+    if not GOOGLE_VARIANTS_FILE.is_file():
+        print("google variants missing:", GOOGLE_VARIANTS_FILE)
+        return 0
+    data = json.loads(GOOGLE_VARIANTS_FILE.read_text(encoding="utf-8"))
+    groups: dict[str, list[tuple[re.Pattern[str], str]]] = {}
+    for rule in data.get("rules", []):
+        trigger = rule.get("trigger") or ""
+        if not trigger:
+            continue
+        groups.setdefault(trigger, []).append(
+            (re.compile(rule["pattern"]), rule["replace"]))
+    if not groups:
+        return 0
+    triggers = sorted(groups, key=len, reverse=True)
+    trigger_re = re.compile("|".join(re.escape(t) for t in triggers))
+    changed = 0
+    for key, value in merged.items():
+        if not isinstance(value, str) or not value:
+            continue
+        matched = {m.group(0) for m in trigger_re.finditer(value)}
+        if not matched:
+            continue
+        new_value = value
+        for trigger in matched:
+            for pattern, replacement in groups.get(trigger, ()):
+                new_value = pattern.sub(replacement, new_value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    print(f"google name variants: {changed} values rewritten, "
+          f"{len(data.get('rules', []))} form rules / {len(groups)} names")
+    return changed
+
+
+def apply_quotes(merged: dict[str, str]) -> int:
+    """Collapse accidentally doubled Russian quotation marks."""
+    changed = 0
+    for key, value in merged.items():
+        if "««" not in value and "»»" not in value:
+            continue
+        new_value = re.sub(r"«{2,}", "«", value)
+        new_value = re.sub(r"»{2,}", "»", new_value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    return changed
+
+
+def apply_newlines(merged: dict[str, str]) -> int:
+    """Turn literal ``\\n`` sequences left by older sources into real breaks.
+
+    A few UI error strings reached the pack with a double-escaped newline, so
+    the client drew the two characters ``\\n`` instead of starting a new line.
+    """
+    changed = 0
+    for key, value in merged.items():
+        if "\\n" not in value and "\\r" not in value:
+            continue
+        new_value = (value.replace("\\r\\n", "\n").replace("\\n", "\n")
+                     .replace("\\r", "\n"))
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    print(f"escaped newlines normalized: {changed} values")
     return changed
 
 
@@ -610,6 +729,8 @@ def source_fingerprint() -> str:
     _feed_file(digest, Path(__file__))
     _feed_file(digest, ROOT / "tools" / "name_variants.json")
     _feed_file(digest, ROOT / "tools" / "angle_terms.json")
+    _feed_file(digest, ROOT / "tools" / "google_glossary.json")
+    _feed_file(digest, ROOT / "tools" / "google_variants.json")
     _feed_file(digest, VOICE_KEYS_FILE)
     for path in sorted(FILL_DIR.glob("ru_fill_*.json")):
         _feed_file(digest, path)
@@ -696,10 +817,17 @@ def main() -> int:
     variant_changed = apply_name_variants(merged, variants)
     print(f"name variants applied: {variant_changed} values rewritten, total {len(merged)}")
 
+    # The community spreadsheet is the canonical glossary; it overrides the
+    # older wording in standalone keys.
+    apply_google_glossary(merged)
+
     context_changed = apply_context_terms(merged)
     print(f"context terms applied: {context_changed} values rewritten, total {len(merged)}")
 
     apply_voice_wrap(merged)
+
+    # Older sources left double-escaped newlines in a handful of UI errors.
+    apply_newlines(merged)
 
     # Re-attach the game's inline rich-text tags (value highlights, status
     # tooltips like <$ba.stun>Stunning</>). Old RU sources dropped them all.
@@ -707,6 +835,14 @@ def main() -> int:
 
     # Translate the bare <Term> references the game renders as literal text.
     apply_angle_terms(merged)
+
+    # Rename established names inside sentences last, so terms that were just
+    # translated from the <...> glossary get the canonical spelling as well.
+    apply_google_variants(merged)
+
+    # Collapse accidentally doubled Russian quotation marks.
+    quotes_fixed = apply_quotes(merged)
+    print(f"quotation marks normalized: {quotes_fixed} values")
 
     # Drop junk "translations" that were never display strings: they are raw
     # story directive fragments whose value was a cosmetic rewrite. Keeping

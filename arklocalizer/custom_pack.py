@@ -242,6 +242,42 @@ def strip_display_tags(t: str) -> str:
     return ''.join(out)
 
 
+def _apply_google_renames(merged: dict[str, str], root: Path) -> int:
+    """Apply the community glossary to overrides that were added afterwards.
+
+    ``ru-overrides/*.json`` intentionally win over the manifests, but they were
+    written with the older spelling of some names.  Re-run the canonical rename
+    rules on the finished values so story speaker names follow the glossary too.
+    """
+    variants = root / "tools" / "google_variants.json"
+    if not variants.is_file():
+        return 0
+    data = json.loads(variants.read_text(encoding="utf-8"))
+    groups: dict[str, list[tuple[re.Pattern[str], str]]] = {}
+    for rule in data.get("rules", []):
+        trigger = rule.get("trigger") or ""
+        if trigger:
+            groups.setdefault(trigger, []).append(
+                (re.compile(rule["pattern"]), rule["replace"]))
+    if not groups:
+        return 0
+    trigger_re = re.compile("|".join(
+        re.escape(t) for t in sorted(groups, key=len, reverse=True)))
+    changed = 0
+    for key, value in merged.items():
+        matched = {m.group(0) for m in trigger_re.finditer(value)}
+        if not matched:
+            continue
+        new_value = value
+        for trigger in matched:
+            for pattern, replacement in groups.get(trigger, ()):
+                new_value = pattern.sub(replacement, new_value)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    return changed
+
+
 def load_merged(manifest_dir: Path) -> tuple[dict[str, str], Counter, list]:
     """Single source of truth: manifests + tag-free variants + overrides + IDs.
 
@@ -370,6 +406,8 @@ def load_merged(manifest_dir: Path) -> tuple[dict[str, str], Counter, list]:
                         n += 1
                     merged[s] = t
         skipped["story_tsv_applied"] = n
+    renamed = _apply_google_renames(merged, manifest_dir.parent)
+    skipped["google_renames"] = renamed
     return merged, skipped, conflicts
 
 

@@ -20,6 +20,8 @@ XUnity-пак текста, контекстный словарь RichTextFix, �
 | `tools/build_rich_styles.py` | Таблица стилей `<@...>`/`<$...>` из CN-клиента. |
 | `tools/build_angle_terms.py` | Собирает глоссарий слов внутри `<...>` из перевода и ручного словаря. |
 | `tools/angle_terms.json`, `tools/angle_terms_manual.json` | Готовый и ручной глоссарий `<...>`-терминов. |
+| `tools/google_glossary.json`, `tools/build_google_glossary.py` | Канонический глоссарий сообщества из Google Sheets: имена, расы, места, организации, термины. |
+| `tools/build_google_variants.py`, `tools/google_variants.json` | Правила переименования по глоссарию: падежи и число сохраняются, род не меняется. |
 | `tools/build_cn_display_font.py`, `tools/build_ru_font_bundle.py`, `tools/build_tmp_shader.py` | Шрифтовой бандл и TMP-шейдер. |
 | `tools/package_merged_hook.py` | Сборка ZIP-релиза. |
 | `tools/contract_test.py` | Проверка целостности пака. |

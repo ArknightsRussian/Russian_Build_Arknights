@@ -119,8 +119,8 @@
 
 | Оригинал | Перевод |
 | --- | --- |
-| `Babel` | Бабель |
-| `Babel - Rerun` | Бабель — Повтор |
+| `Babel` | Вавилон |
+| `Babel - Rerun` | Вавилон — Повтор |
 | `Baleful Broodling` | Злобный выводок |
 | `Barricade` | Баррикада |
 | `Base Construct` | Конструкция базы |
@@ -200,7 +200,7 @@
 | `Captain Mateo` | Капитан Матео |
 | `Cargo Escort` | Грузовой конвой |
 | `Carnevale Snack Cart` | Закусочная тележка Карнавала |
-| `Caster` | ЗАКЛИНАТЕЛЬ |
+| `Caster` | Заклинатель |
 | `Catastrophe Early Warning System` | Система раннего предупреждения о Катастрофах |
 | `Catch Zone` | Зона захвата |
 | `Causal Abnormality` | Причинная аномалия |
@@ -503,7 +503,7 @@
 | `Gabe-iner II` | Габе-инер II |
 | `Gabe-iner III` | Габе-инер III |
 | `Gacha Machine` | Гача-автомат |
-| `Galleria Stellaria` | Галерея Стеллария |
+| `Galleria Stellaria` | Звёздная галерея |
 | `Gas Jet Thrower` | Газовый метатель |
 | `Gatherer` | Собиратель |
 | `Gatherers` | Собиратели |
@@ -688,7 +688,7 @@
 | `Keratex Clawbeast` | Кератексовый когтезверь |
 | `Kharanduu Khagan, the Scourge of the Land` | Харандуу-каган, Бич земли |
 | `Kites` | Воздушный змей |
-| `Kjerag` | Чераг |
+| `Kjerag` | Кьераг |
 | `Kjeragandr` | Кджерагандр |
 | `Knight Crest` | Герб рыцаря |
 | `Knightly Savings` | Рыцарские сбережения |
@@ -852,7 +852,7 @@
 | `OpFor: Pipe` | Противник: Труба |
 | `OpFor: String` | Противник: Струна |
 | `Orientation Trial` | Ориентировочное испытание |
-| `Originium Altar` | Алтарь Ориджиния |
+| `Originium Altar` | Ориджиниевый алтарь |
 | `Originium Altars` | Алтарь Ориджиния |
 | `Originium Explosive` | Взрывчатка из Ориджиния |
 | `Originium Formation` | Формация Ориджиния |
@@ -892,7 +892,7 @@
 | `Parliament's Messenger` | Посланник парламента |
 | `Pasture Village` | Пастушья деревня |
 | `Pasture Villages` | Пастушья деревня |
-| `Path` | Тропа |
+| `Path` | Путь |
 | `Path of Life` | Путь жизни |
 | `Pathshaper Fractal` | Формирователь путей Фрактал |
 | `Patriot` | Патриот |
@@ -910,7 +910,7 @@
 | `Phantomic Barrier Blueprint` | Чертёж фантомного барьера |
 | `Pincerbugs` | Клешнехвост |
 | `Pinch-Out Experimental Operation` | Экспериментальная операция «Обход клещами» |
-| `Pinus Sylvestris` | Сосна обыкновенная |
+| `Pinus Sylvestris` | Пинус Сильвестрис |
 | `Planetary Debris` | Планетарные обломки |
 | `Planting Box Group` | Группа посадочных ящиков |
 | `Plug-in Supply Depot` | Склад подключаемых модулей |
@@ -961,7 +961,7 @@
 | `Rampart` | Вал |
 | `Raptor` | Хищник |
 | `Raptors` | Хищник |
-| `Rat King` | Рат король |
+| `Rat King` | Крысиный король |
 | `Reactive Barrier Blueprint` | Чертёж Реактивного барьера |
 | `Realigned Flux` | Перенастроенный поток |
 | `Really Big Pot` | По-настоящему большой котёл |
@@ -1027,7 +1027,7 @@
 | `Saintess' Snowrobe` | Снежное одеяние святой |
 | `Saintess's Snowrobe` | Снежная мантия святой |
 | `Sal Viento Bishop Quintus` | Епископ Квинт из Солёного Вьенто |
-| `Salt Flat` | Солончак |
+| `Salt Flat` | Соляная равнина |
 | `Saltfin Breakers` | Солёно-плавниковый крушитель |
 | `Saltfin Shakers` | Солёно-плавниковая встряска |
 | `Saltheap Cannon` | Пушка «Солёное горло» |
@@ -1076,8 +1076,8 @@
 | `Shrine Marksman Cosplayers` | Косплеер метателя святилища |
 | `Shrine Nurturer Cosplayer` | Косплеер служительницы святилища |
 | `Silvernwhite Bulwark` | Серебристо-белый бастион |
-| `Siracusa` | Сиракуза |
-| `Skullshatterer` | Скуллшаттерер |
+| `Siracusa` | Сиракузы |
+| `Skullshatterer` | Череполом |
 | `Sky-Splitting Pillar` | Рассекающий небеса столп |
 | `Small Corrals` | Малый загон |
 | `Small Symbionts` | Малый симбионт |
@@ -1183,7 +1183,7 @@
 | `The Endspeaker, Will of We Many` | Говорящий с Концом, Воля Миожества |
 | `The First To Talk` | Первый, кто заговорил |
 | `The Knight Crest` | Герб рыцаря |
-| `The Last Knight` | Ласт рыцарь |
+| `The Last Knight` | Последний рыцарь |
 | `The Last Steam Knight` | Последний паровой рыцарь |
 | `The Making of a Fortune` | Как сколотить состояние |
 | `The Masses' Travels` | Странствия толпы |
@@ -1212,7 +1212,7 @@
 | `Tool Supply Station` | Станция снабжения инструментами |
 | `Torrent Beam Activator` | Активатор поточного луча |
 | `Torrent Beam Activators` | Активатор поточного луча |
-| `Touch` | Тоуч |
+| `Touch` | Тач |
 | `Touch of Benevolence` | Тач Милосердия |
 | `Touch of the Sanguinarch` | Тач Кровавого Архонта |
 | `Tough Siege` | Упорная осада |

@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MERGED = ROOT / "merged-manifests" / "99_merged.json"
 FILL_DIR = ROOT / "ru-manifests"
 MANUAL = ROOT / "tools" / "angle_terms_manual.json"
+GOOGLE = ROOT / "tools" / "google_glossary.json"
 OUT = ROOT / "tools" / "angle_terms.json"
 DOCS = ROOT / "docs" / "ANGLE_TERMS.md"
 REPORT = ROOT / "work" / "angle_terms_unresolved.tsv"
@@ -132,6 +133,8 @@ def main() -> int:
     lookups = lookup_map()
     manual = load_json(MANUAL) if MANUAL.is_file() else {}
     manual_folded = {k.casefold(): v for k, v in manual.items()}
+    google = load_json(GOOGLE) if GOOGLE.is_file() else {}
+    google_folded = {k.casefold(): v for k, v in google.items()}
     existing = load_json(OUT) if OUT.is_file() else {}
     existing_folded = {k.casefold(): v for k, v in existing.items()}
     terms = collect_terms()
@@ -141,10 +144,14 @@ def main() -> int:
     for term, count in terms.most_common():
         hit = manual.get(term) or manual_folded.get(term.casefold())
         if not hit:
+            hit = google.get(term) or google_folded.get(term.casefold())
+        if not hit:
             hit = existing.get(term) or existing_folded.get(term.casefold())
         if not hit:
             for candidate in candidates(term):
                 hit = manual.get(candidate) or manual_folded.get(candidate.casefold())
+                if not hit:
+                    hit = google.get(candidate) or google_folded.get(candidate.casefold())
                 if not hit:
                     hit = lookups.get(candidate.casefold())
                 if hit:
