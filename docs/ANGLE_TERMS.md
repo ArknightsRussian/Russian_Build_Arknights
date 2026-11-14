@@ -2,7 +2,7 @@
 
 Игра показывает ссылки вида `<Dream Tiles>` как обычный текст. Эти слова переводятся отдельным словарём `tools/angle_terms.json`, который применяется только внутри угловых скобок и не затрагивает обычные слова в сюжете.
 
-Всего терминов: **1201**, переведено: **1201**, без перевода: **0**.
+Всего терминов: **1214**, переведено: **1214**, без перевода: **0**.
 
 ## #
 
@@ -183,6 +183,7 @@
 | `Bronze Mirror` | Бронзовое зеркало |
 | `Bronze Spearhead` | Бронзовый наконечник копья |
 | `Brushing Past` | Столкновение |
+| `Building` | Строительство |
 | `Buried Metal Chest` | Зарытый металлический сундук |
 | `Burning Vine` | Горящая лоза |
 | `Burning Wick` | Горящий фитиль |
@@ -200,6 +201,7 @@
 | `Cargo Escort` | Грузовой конвой |
 | `Carnevale Snack Cart` | Закусочная тележка Карнавала |
 | `Caster` | ЗАКЛИНАТЕЛЬ |
+| `Catastrophe Early Warning System` | Система раннего предупреждения о Катастрофах |
 | `Catch Zone` | Зона захвата |
 | `Causal Abnormality` | Причинная аномалия |
 | `Celadon Teaware` | Селадоновая посуда |
@@ -209,12 +211,14 @@
 | `Chain Movement` | Цепное перемещение |
 | `Change of Perspective` | Смена перспективы |
 | `Channel` | Канал |
+| `Channel Connected` | Канал соединён |
 | `Chasing Fate` | В погоне за судьбой |
 | `Chest Limb?` | Грудная конечность? |
 | `Chitotex Clawbeast` | Читотекс Когтезверь |
 | `Chun` | Чун |
 | `City Neon` | Городской неон |
 | `City Neons` | Городской неон |
+| `Clear` | Расчистка |
 | `Clear Water` | Пройдите «Воду» |
 | `Clockwork Servants` | Заводной слуга |
 | `Cloud-Piercing Light` | Пронзающий облака свет |
@@ -727,6 +731,7 @@
 | `Loader` | Погрузчик |
 | `Loaders` | Погрузчик |
 | `Loam` | Суглинок |
+| `Logistics Support System` | Система логистической поддержки |
 | `Londinium Secondary Defense Artillery` | Второстепенная оборонительная артиллерия Лондиниума |
 | `Lone Trail` | Одинокий след |
 | `Lone Trail - Rerun` | Одинокий след — Повтор |
@@ -820,6 +825,7 @@
 | `Nightfall` | Сумерки |
 | `no visibility` | Без видимости |
 | `Nocturnal Tales` | Ночные сказки |
+| `Node Structure` | Структура узла |
 | `Novel Scrolls` | Роман в свитке |
 
 ## O
@@ -894,6 +900,7 @@
 | `Pavlovich, Magistrate` | Павлович, Магистрат |
 | `Penetrating Cold` | Пронизывающий холод |
 | `People, A People` | Люди, Народ |
+| `Permanent Members` | Постоянные участники |
 | `Pet-iner` | Питомец-напарник |
 | `Pet-iner I` | Питомец-напарник I |
 | `Pet-iner II` | Питомец-напарник II |
@@ -1006,6 +1013,8 @@
 | `Rubble` | Обломки |
 | `Ruby Flightwings` | Руби Крилвинг |
 | `Ruins` | Развалины |
+| `Running Supply Vehicle Track` | Путь транспорта снабжения |
+| `Running Supply Vehicle Track Connected` | Путь транспорта снабжения соединён |
 
 ## S
 
@@ -1028,6 +1037,7 @@
 | `Sapid Auspice` | Вкусное предзнаменование |
 | `Sapidity` | Сапидность |
 | `Sapphire Flightwings` | Сапфировое лётное крыло |
+| `Sarcophagi of Exile` | Саркофаги изгнания |
 | `Sargon` | Саргон |
 | `Sarkaz Centurion` | Сарказ-центурион |
 | `Sarkaz Centurion Host` | Хоста сарказов-центурионов |
@@ -1190,6 +1200,7 @@
 | `Throne of Blood` | Трон из крови |
 | `Throttle Valve` | Дроссельный клапан |
 | `Throttle Valves` | Дроссельный клапан |
+| `Thunder-storm` | Гроза |
 | `Thunderburst` | Громовой взрыв |
 | `Thunderstorm` | Гроза |
 | `Tidal Leader` | Приливный лидер |
@@ -1210,6 +1221,7 @@
 | `Transmitter` | Трансмиттер |
 | `Transport` | Телепорт |
 | `Transregional Communication Terminal` | Межрегиональный терминал связи |
+| `Transshipment Port` | Перевалочный порт |
 | `Transverse Plate` | Поперечная плита |
 | `Transverse Plates` | Поперечная плита |
 | `Trials for Navigator` | Испытания для штурмана |
@@ -1339,3 +1351,9 @@
 | Оригинал | Перевод |
 | --- | --- |
 | `Ægir` | Эгир |
+
+## П
+
+| Оригинал | Перевод |
+| --- | --- |
+| `При 6 разных [Sargon] Оперативниках на поле` | При 6 разных оперативниках [Sargon] на поле |

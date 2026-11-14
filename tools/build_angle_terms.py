@@ -116,6 +116,15 @@ def collect_terms() -> Counter:
             if term.startswith(("http", "newsimg")):
                 continue
             terms[term] += 1
+    # Keep the glossary idempotent: once values are translated, the English
+    # term is no longer present in the merged map, so carry it over from the
+    # previous glossary and from the manual dictionary.
+    if OUT.is_file():
+        for term in load_json(OUT):
+            terms.setdefault(term, 0)
+    if MANUAL.is_file():
+        for term in load_json(MANUAL):
+            terms.setdefault(term, 0)
     return terms
 
 
@@ -123,12 +132,16 @@ def main() -> int:
     lookups = lookup_map()
     manual = load_json(MANUAL) if MANUAL.is_file() else {}
     manual_folded = {k.casefold(): v for k, v in manual.items()}
+    existing = load_json(OUT) if OUT.is_file() else {}
+    existing_folded = {k.casefold(): v for k, v in existing.items()}
     terms = collect_terms()
 
     resolved: dict[str, str] = {}
     unresolved: list[tuple[int, str]] = []
     for term, count in terms.most_common():
         hit = manual.get(term) or manual_folded.get(term.casefold())
+        if not hit:
+            hit = existing.get(term) or existing_folded.get(term.casefold())
         if not hit:
             for candidate in candidates(term):
                 hit = manual.get(candidate) or manual_folded.get(candidate.casefold())
