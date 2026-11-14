@@ -85,6 +85,10 @@ def rewrite(value: str) -> str:
                               "СОПР +<@ba.vup>{magic_resistance}")
         value = value.replace("СОП +<@ba.vup>{magic_resistance}",
                               "СОПР +<@ba.vup>{magic_resistance}")
+        value = value.replace("СОМ +{magic_resistance}",
+                              "СОПР +{magic_resistance}")
+        value = value.replace("СОП +{magic_resistance}",
+                              "СОПР +{magic_resistance}")
         value = value.replace("Сопротивление искусству +{magic_resistance}",
                               "СОПР +{magic_resistance}")
         value = value.replace("Сопротивление +{magic_resistance}",
