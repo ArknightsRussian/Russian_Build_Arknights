@@ -20,9 +20,24 @@ import re
 
 _IMMUNITY = re.compile(r"^Иммунитет к (?=\S)")
 _IMMUNITY_SKIP = ("большинств", "контролирующ", "негативн", "эффектам,")
+_IMMUNITY_WORDS = (
+    ("Оглушению", "Оглуш."), ("Оглушение", "Оглуш."),
+    ("Заморозке", "Замор."), ("Заморозка", "Замор."),
+    ("Замедлению", "Замедл."), ("Замедление", "Замедл."),
+    ("Левитации", "Левит."), ("Левитация", "Левит."),
+    ("параличу", "Парал."), ("Паралич", "Парал."),
+    ("приманке", "Приман."), ("Приманка", "Приман."),
+    ("контролю", "Контр."), ("Контроль", "Контр."),
+    ("эффектам Трясины", "Тряс."), ("Трясины", "Тряс."),
+    ("Сну", "Сон"), ("Страху", "Страх"), ("Ужасу", "Ужас"),
+)
 _ELITE = re.compile(r"\bЭлитный (?=\d)")
 _MON3TR = re.compile(r"\bМонст(?:а|у|е|ой|ою|ы)\b")
 _LGD = re.compile(r"L\.\s?G\.\s?D\.?")
+_LATIN_STATS = (
+    (re.compile(r"\bHP\b"), "ХП"),
+    (re.compile(r"\bATK\b"), "АТК"),
+)
 
 _NEURAL_PHRASES = (
     ("к нейросети", "к нейромодулю"),
@@ -67,7 +82,9 @@ def rewrite(value: str) -> str:
             and len(stripped) <= 52
             and "{" not in stripped
             and not any(skip in stripped.lower() for skip in _IMMUNITY_SKIP)):
-        value = _IMMUNITY.sub("НЕУЯЗ. к ", value, count=1)
+        value = _IMMUNITY.sub("НЕУЯЗ. ", value, count=1)
+        for source, target in _IMMUNITY_WORDS:
+            value = value.replace(source, target)
 
     value = _ELITE.sub("Элита ", value)
     value = _MON3TR.sub("Мон3тр", value)
@@ -93,5 +110,8 @@ def rewrite(value: str) -> str:
                               "СОПР +{magic_resistance}")
         value = value.replace("Сопротивление +{magic_resistance}",
                               "СОПР +{magic_resistance}")
+
+    for pattern, target in _LATIN_STATS:
+        value = pattern.sub(target, value)
 
     return value

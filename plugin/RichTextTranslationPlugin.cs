@@ -69,7 +69,7 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     // missions and enemy resistances use "·"/"•". The bullet is presentation,
     // not part of the data key.
     private static readonly Regex LeadingBullet = new(
-        @"\A(?<prefix>\s*[-–—•·]\s+)(?<body>.+)\z",
+        @"\A(?<prefix>\s*[-–—−－•·]\s*)(?<body>.+)\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Singleline);
 
     public override void Load()
@@ -344,6 +344,19 @@ public sealed class RichTextTranslationPlugin : BasePlugin
                     else if (TryTranslateWithRuntimeSuffix(bulletTranslator, body, out string bodySuffixed))
                         bodyTranslation = bodySuffixed;
                 }
+                // The UI typography replaces hyphens between stage numbers with
+                // en dashes. The data keys keep plain hyphens.
+                string dashless = NormalizeDashes(body);
+                if (bodyTranslation == null && dashless != body && bulletTranslator != null)
+                {
+                    bodyTranslation = DynamicTranslations.LookupAny(dashless);
+                    if (bodyTranslation == null
+                        && bulletTranslator.TryTranslate(dashless, out string dashExact) && dashExact != dashless)
+                        bodyTranslation = dashExact;
+                    else if (bodyTranslation == null
+                        && TryTranslateWithRuntimeSuffix(bulletTranslator, dashless, out string dashSuffixed))
+                        bodyTranslation = dashSuffixed;
+                }
                 if (bodyTranslation != null)
                 {
                     ApplyTranslation(context, original,
@@ -557,10 +570,12 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         return baseText.Length > 0;
     }
 
+    private static string NormalizeDashes(string text) =>
+        text.Replace('\u2013', '-').Replace('\u2014', '-').Replace('\u2212', '-');
+
     private bool TryTranslateWithRuntimeSuffix(ITranslator active, string original,
         out string translation)
-    {
-        translation = "";
+    {        translation = "";
         if (!TrySplitRuntimeSuffix(original, out string baseText, out string suffix))
         {
             return false;
