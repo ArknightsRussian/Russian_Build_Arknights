@@ -75,6 +75,11 @@
       "pattern": "(?<![A-Za-z])Grypherburg(?![A-Za-z])",
       "replace": "Грифербург",
       "note": "Latin city name left in RU values"
+    },
+    {
+      "pattern": "Плиты грёз",
+      "replace": "Плиты снов",
+      "note": "Dream Tiles: align with the existing achievement wording"
     }
   ]
 }
