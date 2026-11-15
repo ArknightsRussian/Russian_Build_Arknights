@@ -147,6 +147,9 @@ internal static class RuntimeRewrites
     private static readonly Regex LevelOnly = new(
         @"\ALevel\s*(\d+)\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex SkillPointLabel = new(
+        @"\A(?:SP|СП)\z",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
     private static readonly Regex StageMode = new(
         @"\A(?<mode>Standard|Adverse)\s+(?<code>\d+\s*[-–—]\s*\d+)\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
@@ -172,6 +175,11 @@ internal static class RuntimeRewrites
         if (level.Success)
         {
             translation = $"Ур. {level.Groups[1].Value}";
+            return true;
+        }
+        if (SkillPointLabel.IsMatch(text.Trim()))
+        {
+            translation = "ОН";
             return true;
         }
         Match stage = StageMode.Match(text.Trim());
