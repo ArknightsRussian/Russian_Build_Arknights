@@ -66,6 +66,32 @@ _SP_AGREEMENT = (
 )
 # The promotion badge is assembled in code as "Elite 2Level60" (no space).
 _ELITE_LEVEL = re.compile(r"\bElite\s*(\d)\s*Level\s*(\d+)", re.I)
+# Some old drafts spell the skill points out instead of using the acronym.
+_SP_LONG = re.compile(
+    r"очк(?:о|а|ов|и|у|ом|ами)?\s+навык(?:а|ов|у|ом|ами)?", re.I)
+_SP_DOUBLE = re.compile(r"ОН\s*\((?:ОН|[Оо]чки навыков)\)")
+# The status-effect row already uses "НЕУЯЗ."; the new canon is a colon.
+_UNAVAILABLE = re.compile(r"НЕУЯЗ\.\s*")
+# Seconds are abbreviated with the short "с." everywhere in the UI.
+_SECONDS = re.compile(r"(?<![А-Яа-яЁёA-Za-z])сек\.")
+# Deployment points are "очки развёртывания" in the community glossary.
+_DEPLOY_POINTS = re.compile(r"(?<![A-Za-zА-Яа-яЁё])(?:DP|ДП)(?![A-Za-zА-Яа-яЁё])")
+# "дроп" is gamer slang; the UI calls these rewards.
+_DROP_PHRASES = (
+    ("Редкий дроп", "Редкая награда"), ("редкий дроп", "редкая награда"),
+    ("Удачный дроп", "Удачная награда"), ("удачный дроп", "удачная награда"),
+    ("Связанный дроп", "Связанная награда"),
+    ("Дополнительные дропы", "Дополнительные награды"),
+    ("Обычные дропы", "Обычные награды"),
+    ("Особые дропы", "Особые награды"),
+)
+_DROP_WORDS = (
+    ("дропами", "наградами"), ("дропы", "награды"), ("дропов", "наград"),
+    ("дропа", "награды"), ("дропу", "награде"), ("дропом", "наградой"),
+    ("Дропами", "Наградами"), ("Дропы", "Награды"), ("Дропов", "Наград"),
+    ("Дропа", "Награды"), ("Дропу", "Награде"), ("Дропом", "Наградой"),
+)
+_DROP_LEFT = re.compile(r"(?<![А-Яа-яЁё])[Дд]роп(?![А-Яа-яЁё])")
 
 _NEURAL_PHRASES = (
     ("к нейросети", "к нейромодулю"),
@@ -110,7 +136,7 @@ def rewrite(value: str) -> str:
             and len(stripped) <= 52
             and "{" not in stripped
             and not any(skip in stripped.lower() for skip in _IMMUNITY_SKIP)):
-        value = _IMMUNITY.sub("НЕУЯЗ. ", value, count=1)
+        value = _IMMUNITY.sub("НЕУЯЗ: ", value, count=1)
         for source, target in _IMMUNITY_WORDS:
             value = value.replace(source, target)
 
@@ -147,8 +173,20 @@ def rewrite(value: str) -> str:
     value = _HP_RU.sub("ХП", value)
     value = _RANK.sub("РАНГ", value)
     value = _SKILL_POINTS.sub("ОН", value)
+    value = _SP_LONG.sub("ОН", value)
+    value = _SP_DOUBLE.sub("ОН", value)
     for source, target in _SP_AGREEMENT:
         value = value.replace(source, target)
     value = _ELITE_LEVEL.sub(lambda m: f"Элита {m.group(1)} Ур. {m.group(2)}", value)
+
+    value = _UNAVAILABLE.sub("НЕУЯЗ: ", value)
+    value = _SECONDS.sub("с.", value)
+    value = _DEPLOY_POINTS.sub("ОД", value)
+
+    for source, target in _DROP_PHRASES:
+        value = value.replace(source, target)
+    for source, target in _DROP_WORDS:
+        value = value.replace(source, target)
+    value = _DROP_LEFT.sub("награда", value)
 
     return value

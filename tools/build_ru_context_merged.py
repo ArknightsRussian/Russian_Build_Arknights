@@ -1,4 +1,4 @@
-﻿"""Fill the RichTextFix context dictionaries with the hybrid RU translation.
+"""Fill the RichTextFix context dictionaries with the hybrid RU translation.
 
 Keys come from the friend's CN context dictionaries (the last real build embeds
 them in runtime/en-zh-offline-final/.../ArknightsLocalization.RichTextFix.dll)
@@ -224,6 +224,36 @@ def main() -> int:
         (dynamic_path).write_text(
             json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         templates = current
+
+    # Attack/redeploy speed tiers are quoted labels, not status effects. The old
+    # translations reused "Замедление" (the Slow debuff) next to a numeric stat;
+    # the panel expects the tier adjective.
+    speed_labels = {
+        "Normal": "Обычная", "Average": "Средняя", "Slightly Fast": "Повышена",
+        "Fast": "Высокая", "Slightly Slow": "Снижена", "Slow": "Низкая",
+        "Very Fast": "Очень высокая", "Very Slow": "Очень низкая",
+    }
+    for name in ("attack-speed", "redeploy-speed"):
+        path = OUT_FOLDER / (name + ".json")
+        if not path.is_file():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for source, target in speed_labels.items():
+            if source in data:
+                data[source] = target
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8", newline="\n")
+    id_path = OUT_FOLDER / "id.json"
+    if id_path.is_file():
+        ids = json.loads(id_path.read_text(encoding="utf-8"))
+        for domain, entries in ids.items():
+            if "ATK_SPEED" not in domain and "RESPAWN" not in domain:
+                continue
+            for source, target in speed_labels.items():
+                if source in entries:
+                    entries[source] = target
+        id_path.write_text(json.dumps(ids, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                           encoding="utf-8", newline="\n")
 
     print(f"context sources: {total}, filled: {filled}, dynamic templates: {len(templates)}")
     pack(OUT_FOLDER, OUT_GZ)

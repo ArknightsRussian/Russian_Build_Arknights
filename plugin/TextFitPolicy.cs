@@ -153,6 +153,15 @@ internal static class RuntimeRewrites
     private static readonly Regex StageMode = new(
         @"\A(?<mode>Standard|Adverse)\s+(?<code>\d+\s*[-–—]\s*\d+)\z",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex AtElite = new(
+        @"\bat\s+Elite\s*(\d+)\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex EliteAnywhere = new(
+        @"\bElite\s*(\d+)\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex SpAnywhere = new(
+        @"(?<![A-Za-zА-Яа-яЁё])(?:SP|СП)(?![A-Za-zА-Яа-яЁё])",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     internal static bool TryFix(string text, out string translation)
     {
@@ -182,15 +191,41 @@ internal static class RuntimeRewrites
             translation = "ОН";
             return true;
         }
+        Match atElite = AtElite.Match(text.Trim());
+        if (atElite.Success && atElite.Index == 0 && atElite.Length == text.Trim().Length)
+        {
+            translation = $"Элита {atElite.Groups[1].Value}";
+            return true;
+        }
         Match stage = StageMode.Match(text.Trim());
         if (stage.Success)
         {
             string mode = stage.Groups["mode"].Value.Equals("Adverse", StringComparison.OrdinalIgnoreCase)
-                ? "Неблагоприятный"
+                ? "Сложно"
                 : "Стандарт";
             translation = $"{mode} {stage.Groups["code"].Value.Replace('–', '-').Replace('—', '-')}";
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Fix English fragments the client splices into an already translated
+    /// string ("Модуль Elite 2Level60", "Удачи~ at Elite 2", "50 SP").
+    /// </summary>
+    internal static string Apply(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        if (text.IndexOf("Elite", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            text = EliteLevel.Replace(text,
+                m => $"Элита {m.Groups[1].Value} Ур. {m.Groups[2].Value}");
+            text = AtElite.Replace(text, m => $"Элита {m.Groups[1].Value}");
+            text = EliteAnywhere.Replace(text, m => $"Элита {m.Groups[1].Value}");
+        }
+        // "SP" is deliberately not rewritten in composed text: item/series
+        // names such as "Swimming Suit Type SP" are not skill points. The
+        // standalone label and the data pack handle the stat UI.
+        return text;
     }
 }

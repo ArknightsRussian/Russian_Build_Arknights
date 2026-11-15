@@ -196,6 +196,10 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             // of raw markup. Never install components or add links here.
             text = OfficialRichStyles.ResolveMacros(text);
         }
+        // Runtime-composed labels ("Разблокирован ... Модуль Elite 2Level60")
+        // splice English fragments into an already translated sentence, so the
+        // final string needs the same rewrites the whole-string path applies.
+        text = RuntimeRewrites.Apply(text);
         context.OverrideTranslatedText(text);
         TextFitPolicy.Adjust(context.Component);
     }

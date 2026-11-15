@@ -418,6 +418,27 @@ def apply_context_terms(merged: dict[str, str]) -> int:
 
 ANGLE_TERMS_FILE = ROOT / "tools" / "angle_terms.json"
 ANGLE_TERM_RE = re.compile(r"<([^<>\r\n]{1,120})>")
+# Square-bracket references behave like <Term>: the client draws them as plain
+# text, so faction/region names inside them need the same translation. Technical
+# keys (lowercase, dotted, all-caps) are skipped by the replacer.
+BRACKET_TERM_RE = re.compile(r"\[([^\[\]\r\n]{1,60})\]")
+BRACKET_EXTRA = {
+    "Yan": "Янь",
+    "Shangshu": "Шаншу",
+    "Shangshu Night Market": "Ночной рынок Шаншу",
+    "Durable": "Прочный",
+    "Precision": "Точность",
+    "Foresight": "Предвидение",
+    "Resilient": "Стойкость",
+    "Agile": "Ловкость",
+    "Swift": "Быстрота",
+    "Dominion": "Господство",
+    "Arcane": "Тайные знания",
+    "Marvel": "Чудо",
+    "Investor": "Инвестор",
+    "Seedbeds": "Семенные грядки",
+    "Rewilder": "Возрождающий",
+}
 ANGLE_SKIP = {"alpha", "align", "b", "br", "color", "cspace", "font", "i", "indent",
               "line-height", "line-indent", "link", "lowercase", "mark", "material",
               "margin", "mspace", "nobr", "noparse", "page", "pos", "rotate", "s",
@@ -443,10 +464,27 @@ def _angle_term_repl(match: re.Match[str]) -> str:
     return f"<{lead}{translated}{trail}>"
 
 
+def _bracket_term_repl(match: re.Match[str]) -> str:
+    term = match.group(1)
+    key = term.strip()
+    if not key or len(key) < 2 or key[0].islower():
+        return match.group(0)
+    if not re.fullmatch(r"[A-Za-zÆØÅæøå][A-Za-zÆØÅæøå' \-]*", key):
+        return match.group(0)
+    translated = (BRACKET_EXTRA.get(key) or ANGLE_TERMS.get(key)
+                  or ANGLE_TERMS_FOLDED.get(key.casefold()))
+    if not translated:
+        return match.group(0)
+    lead = term[:len(term) - len(term.lstrip())]
+    trail = term[len(term.rstrip()):]
+    return f"[{lead}{translated}{trail}]"
+
+
 def _translate_angle_terms(text: str) -> str:
     parts = NOPARSE_RE.split(text)
     for index in range(0, len(parts), 2):  # even offsets are outside <noparse>
         parts[index] = ANGLE_TERM_RE.sub(_angle_term_repl, parts[index])
+        parts[index] = BRACKET_TERM_RE.sub(_bracket_term_repl, parts[index])
     return "".join(parts)
 
 
@@ -466,10 +504,12 @@ def apply_angle_terms(merged: dict[str, str]) -> int:
         return 0
     data = json.loads(ANGLE_TERMS_FILE.read_text(encoding="utf-8"))
     ANGLE_TERMS = {str(k): str(v) for k, v in data.items()}
+    for term, translated in BRACKET_EXTRA.items():
+        ANGLE_TERMS.setdefault(term, translated)
     ANGLE_TERMS_FOLDED = {k.casefold(): v for k, v in ANGLE_TERMS.items()}
     changed = 0
     for key, value in merged.items():
-        if "<" not in value:
+        if "<" not in value and "[" not in value:
             continue
         new_value = _translate_angle_terms(value)
         if new_value != value:
@@ -638,7 +678,12 @@ _DOUBLE_GERMAN = re.compile(r"„([^“\n]{1,400})“")
 _SINGLE_QUOTED = re.compile(r"(?<![A-Za-zА-Яа-яЁё0-9])'([^'\n]{1,400})'(?![A-Za-zА-Яа-яЁё0-9])")
 _DOUBLE_ASCII = re.compile(r'(?<![A-Za-zА-Яа-яЁё0-9])"([^"\n]{1,400})"(?![A-Za-zА-Яа-яЁё0-9])')
 _QUOTE_SPACES = re.compile(r"«\s+|\s+»")
-_LEADING_BULLET = re.compile(r"^[-–]\s+(?=[А-ЯЁ«])")
+# Medal conditions arrive as "-Получить ..." (dash glued to the word) or with
+# a space. The UI already shows a "Способ получения" plate, so the dash is
+# dropped; a leading minus before a digit stays untouched.
+_LEADING_BULLET = re.compile(r"^[-–—－]\s*(?=[А-ЯЁA-Z«\"'])")
+# A wrapped line must not start with punctuation: move it to the previous line.
+_LINE_LEAD_PUNCT = re.compile(r"\n[ \t]*([,.;:!?»])")
 _DESTROY_OPERATION = re.compile(
     r"операци([юия]) на уничтожение\s+([^.,;:!?\n«»]+)", re.IGNORECASE)
 
@@ -668,6 +713,7 @@ def apply_quotes(merged: dict[str, str]) -> int:
         new_value = _QUOTE_SPACES.sub(lambda m: "«" if m.group(0).startswith("«") else "»", new_value)
         new_value = _DESTROY_OPERATION.sub(_destroy_operation, new_value)
         new_value = _LEADING_BULLET.sub("", new_value)
+        new_value = _LINE_LEAD_PUNCT.sub(r"\1\n", new_value)
         if new_value != value:
             merged[key] = new_value
             changed += 1
@@ -946,6 +992,9 @@ def main() -> int:
     # line aliases before the short-UI pass so they receive the same rewrites.
     split_added = apply_split_lines(merged)
     print(f"split-line aliases added: {split_added}")
+    # The aliases above are new values: run the bracket/angle glossary on them
+    # as well so "[Sargon]"-style references inside them are not left English.
+    apply_angle_terms(merged)
 
     # Short UI labels (enemy resistance row, promotion label, base tabs, ...)
     # and the neural-network/Mon3tr/L.G.D. canon.
