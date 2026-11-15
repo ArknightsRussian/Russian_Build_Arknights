@@ -326,58 +326,17 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         if (!containsMarkup && !containsLineBreak)
         {
             // List rows (enemy resistances, medal conditions, mission rewards)
-            // reach the component with a generated bullet in front of the data
-            // string, so neither XUnity nor the template index matches the key.
-            // Look the body up and glue the untouched bullet back on.
-            Match bullet = LeadingBullet.Match(original);
-            if (bullet.Success)
-            {
-                string prefix = bullet.Groups["prefix"].Value;
-                string body = bullet.Groups["body"].Value;
-                string? bodyTranslation = DynamicTranslations.LookupAny(body)
-                    ?? ComponentContext.Lookup(context.Component, body, false);
-                ITranslator? bulletTranslator = translator;
-                if (bodyTranslation == null && bulletTranslator != null)
-                {
-                    if (bulletTranslator.TryTranslate(body, out string bodyExact) && bodyExact != body)
-                        bodyTranslation = bodyExact;
-                    else if (TryTranslateWithRuntimeSuffix(bulletTranslator, body, out string bodySuffixed))
-                        bodyTranslation = bodySuffixed;
-                }
-                // The UI typography replaces hyphens between stage numbers with
-                // en dashes. The data keys keep plain hyphens.
-                string dashless = NormalizeDashes(body);
-                if (bodyTranslation == null && dashless != body && bulletTranslator != null)
-                {
-                    bodyTranslation = DynamicTranslations.LookupAny(dashless);
-                    if (bodyTranslation == null
-                        && bulletTranslator.TryTranslate(dashless, out string dashExact) && dashExact != dashless)
-                        bodyTranslation = dashExact;
-                    else if (bodyTranslation == null
-                        && TryTranslateWithRuntimeSuffix(bulletTranslator, dashless, out string dashSuffixed))
-                        bodyTranslation = dashSuffixed;
-                }
-                if (bodyTranslation != null)
-                {
-                    ApplyTranslation(context, original,
-                        prefix + OfficialRichStyles.Restore(body, bodyTranslation, _ => null));
-                    return;
-                }
-            }
-
-            // Some game paths resolve/remove data macros before assigning the
-            // component. The exact CN target still carries the lost style.
+            // reach the component with a generated bullet/icon prefix and a
+            // runtime progress counter. Try the full string, then the body.
             ITranslator? active = translator;
-            if (active != null && active.TryTranslate(original, out string target)
-                && target != original && OfficialRichStyles.HasTarget(target))
-                ApplyTranslation(context, original, OfficialRichStyles.Restore(original, target, _ => null));
-            else if (active != null && (!active.TryTranslate(original, out string existing) || existing == original))
+            if (active != null && TryTranslateLoose(active, original, out string loose))
             {
-                scoped = ComponentContext.Lookup(context.Component, original, false);
-                if (scoped != null) ApplyTranslation(context, original, OfficialRichStyles.Restore(original, scoped, _ => null));
-                else if (TryTranslateWithRuntimeSuffix(active, original, out string suffixed))
-                    ApplyTranslation(context, original, suffixed);
+                ApplyTranslation(context, original, OfficialRichStyles.Restore(original, loose, _ => null));
+                return;
             }
+            scoped = ComponentContext.Lookup(context.Component, original, false);
+            if (scoped != null)
+                ApplyTranslation(context, original, OfficialRichStyles.Restore(original, scoped, _ => null));
             return;
         }
 
@@ -398,7 +357,13 @@ public sealed class RichTextTranslationPlugin : BasePlugin
         // Authored templates carry the CN highlight tags, while XUnity's pack
         // stores tag-stripped values. Prefer the authored target so restored
         // skill descriptions keep every <@ba.*> highlight (e.g. "moderately").
-        string? translation = DynamicTranslations.LookupAny(plain);
+        // Loose lookup first: module/trait rows often arrive with a leading
+        // bullet/icon and a runtime progress suffix around the data key.
+        string? translation = null;
+        if (TryTranslateLoose(current, plain, out string looseTranslation))
+            translation = looseTranslation;
+        if (string.IsNullOrWhiteSpace(translation))
+            translation = DynamicTranslations.LookupAny(plain);
         if (string.IsNullOrWhiteSpace(translation)
             && current.TryTranslate(plain, out string wholeTranslation)
             && !string.IsNullOrWhiteSpace(wholeTranslation))
@@ -573,17 +538,70 @@ public sealed class RichTextTranslationPlugin : BasePlugin
     private static string NormalizeDashes(string text) =>
         text.Replace('\u2013', '-').Replace('\u2014', '-').Replace('\u2212', '-');
 
-    private bool TryTranslateWithRuntimeSuffix(ITranslator active, string original,
+    /// <summary>
+    /// Lookup for a row whose presentation added something the data key does
+    /// not contain: a bullet/icon glyph, a runtime "(0/1)" counter, or a
+    /// typographic dash. Returns the prefix together with the translation so
+    /// the visible row keeps its bullet.
+    /// </summary>
+    private static bool TryTranslateLoose(ITranslator active, string text, out string translation)
+    {
+        translation = "";
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        string body = text.Trim();
+        string prefix = "";
+        Match bullet = LeadingBullet.Match(body);
+        if (bullet.Success)
+        {
+            string candidate = bullet.Groups["body"].Value.Trim();
+            // Do not turn a genuine negative number ("-15% ATK") into a body.
+            if (candidate.Length > 0 && (char.IsLetter(candidate[0]) || candidate[0] == '<'))
+            {
+                prefix = bullet.Groups["prefix"].Value;
+                body = candidate;
+            }
+        }
+
+        string? value = DynamicTranslations.LookupAny(body);
+        if (string.IsNullOrWhiteSpace(value)
+            && active.TryTranslate(body, out string exact)
+            && !string.IsNullOrWhiteSpace(exact) && exact != body)
+            value = exact;
+        if (string.IsNullOrWhiteSpace(value)
+            && TryTranslateWithRuntimeSuffix(active, body, out string suffixed))
+            value = suffixed;
+
+        string dashless = NormalizeDashes(body);
+        if (string.IsNullOrWhiteSpace(value) && dashless != body)
+        {
+            value = DynamicTranslations.LookupAny(dashless);
+            if (string.IsNullOrWhiteSpace(value)
+                && active.TryTranslate(dashless, out string dashExact)
+                && !string.IsNullOrWhiteSpace(dashExact) && dashExact != dashless)
+                value = dashExact;
+            if (string.IsNullOrWhiteSpace(value)
+                && TryTranslateWithRuntimeSuffix(active, dashless, out string dashSuffixed))
+                value = dashSuffixed;
+        }
+
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        translation = prefix + value;
+        return true;
+    }
+
+    private static bool TryTranslateWithRuntimeSuffix(ITranslator active, string original,
         out string translation)
     {        translation = "";
         if (!TrySplitRuntimeSuffix(original, out string baseText, out string suffix))
         {
             return false;
         }
-        string? value = DynamicTranslations.LookupAny(baseText);
+        string dashlessBase = NormalizeDashes(baseText);
+        string? value = DynamicTranslations.LookupAny(dashlessBase);
         if (string.IsNullOrWhiteSpace(value)
-            && active.TryTranslate(baseText, out string baseTranslation)
-            && !string.IsNullOrWhiteSpace(baseTranslation) && baseTranslation != baseText)
+            && active.TryTranslate(dashlessBase, out string baseTranslation)
+            && !string.IsNullOrWhiteSpace(baseTranslation) && baseTranslation != dashlessBase)
         {
             value = baseTranslation;
         }
@@ -686,14 +704,13 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             {
                 continue;
             }
-            if (!current.TryTranslate(line, out string translatedLine)
-                || string.IsNullOrWhiteSpace(translatedLine))
+            if (!TryTranslateLoose(current, line, out string translatedLine))
             {
                 // The popup uses one TMP component for two independently
                 // templated lines, e.g. "(Currently held: 2)" followed by
                 // "Are you sure you want to open 2 Firearms Workshop Giftbox?".
-                // Neither line is an exact key, so fall back to macro rules
-                // per line before giving up.
+                // Try the loose lookup first (bullet/counter/dashes), then the
+                // generated macro rules per line before giving up.
                 string? dynamicLine = DynamicTranslations.LookupAny(line);
                 if (string.IsNullOrWhiteSpace(dynamicLine))
                 {

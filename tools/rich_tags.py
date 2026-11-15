@@ -89,6 +89,12 @@ EXTRA_TERMS = {
     "arts": "Искусство",
     "true damage": "истинный урон",
     "physical damage": "физический урон",
+    # Intensity adverbs used by pull/push/slow descriptions. They are not
+    # standalone map keys, so without these the <@ba.vup> tag is lost on every
+    # repeated "moderately"/"greatly"/"slightly".
+    "moderately": "умеренно",
+    "greatly": "сильно",
+    "slightly": "слегка",
 }
 
 NOISE_WORDS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "for", "with", "is", "are"}

@@ -32,12 +32,23 @@ _IMMUNITY_WORDS = (
     ("Сну", "Сон"), ("Страху", "Страх"), ("Ужасу", "Ужас"),
 )
 _ELITE = re.compile(r"\bЭлитный (?=\d)")
+# "Модули открываются на Элитном 2" -> "на Элите 2". Only adjective forms
+# directly followed by a promotion number are rewritten; "элитный враг" and
+# "Элитный оперативник" keep their normal Russian declension.
+_ELITE_NUM = re.compile(r"\bЭлитн(?:ом|ому|ой|ым)\s+(?=\d|\{)")
+_ELITE_GEN = re.compile(r"\bЭлитного\s+(?=\d|\{)")
+_ELITE_EN = re.compile(r"\bElite\s+(?=\d)")
 _MON3TR = re.compile(r"\bМонст(?:а|у|е|ой|ою|ы)\b")
-_LGD = re.compile(r"L\.\s?G\.\s?D\.?")
+# The game and the RU source use both Latin L.G.D. and Cyrillic Л. Г. Д.
+# spellings. Both must become the accepted community abbreviation.
+_LGD = re.compile(r"(?:L\.\s?G\.\s?D\.?|Л\.\s?Г\.\s?Д\.?)", re.I)
 _LATIN_STATS = (
     (re.compile(r"\bHP\b"), "ХП"),
     (re.compile(r"\bATK\b"), "АТК"),
 )
+# ОЗ (очки здоровья) and ХП are the same stat. The community glossary uses ХП.
+_HP_RU = re.compile(r"(?<![А-Яа-яЁё])ОЗ(?![А-Яа-яЁё])")
+_RANK = re.compile(r"\bRANK\b")
 
 _NEURAL_PHRASES = (
     ("к нейросети", "к нейромодулю"),
@@ -87,6 +98,9 @@ def rewrite(value: str) -> str:
             value = value.replace(source, target)
 
     value = _ELITE.sub("Элита ", value)
+    value = _ELITE_NUM.sub("Элите ", value)
+    value = _ELITE_GEN.sub("Элиты ", value)
+    value = _ELITE_EN.sub("Элита ", value)
     value = _MON3TR.sub("Мон3тр", value)
 
     for source, target in _NEURAL_PHRASES:
@@ -113,5 +127,7 @@ def rewrite(value: str) -> str:
 
     for pattern, target in _LATIN_STATS:
         value = pattern.sub(target, value)
+    value = _HP_RU.sub("ХП", value)
+    value = _RANK.sub("РАНГ", value)
 
     return value

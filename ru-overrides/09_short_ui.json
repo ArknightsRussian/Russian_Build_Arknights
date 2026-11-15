@@ -18,5 +18,13 @@
   "Originium Materials": "Материал",
   "Orundum": "Орундум",
   "Originite Prime": "Чистый орундум",
-  "Clear 17-13 to obtain this Operator": "Пройдите 17-13, чтобы получить этого Оперативника"
+  "Clear 17-13 to obtain this Operator": "Пройдите 17-13, чтобы получить этого Оперативника",
+  "Clear Cache": "Очистить кэш",
+  "Resources Recover": "Восстановить ресурсы",
+  "Deals Damage to <@ba.kw>all targets</> within range": "Наносит урон всем целям в радиусе действия",
+  "Deals Damage to all targets within range": "Наносит урон всем целям в радиусе действия",
+  "50% chance to dodge Physical and Arts attacks and is less likely to be <@ba.kw>targeted</> by enemies": "С вероятностью 50% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
+  "65% chance to dodge Physical and Arts attacks and is less likely to be <@ba.kw>targeted</> by enemies": "С вероятностью 65% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
+  "50% chance to dodge Physical and Arts attacks and is less likely to be targeted by enemies": "С вероятностью 50% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
+  "65% chance to dodge Physical and Arts attacks and is less likely to be targeted by enemies": "С вероятностью 65% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов"
 }
