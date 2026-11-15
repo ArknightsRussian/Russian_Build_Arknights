@@ -197,6 +197,7 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             text = OfficialRichStyles.ResolveMacros(text);
         }
         context.OverrideTranslatedText(text);
+        TextFitPolicy.Adjust(context.Component);
     }
 
     private bool TrySetCommentedText(ComponentTranslationContext context, string original, string text)
@@ -584,6 +585,10 @@ public sealed class RichTextTranslationPlugin : BasePlugin
                 && TryTranslateWithRuntimeSuffix(active, dashless, out string dashSuffixed))
                 value = dashSuffixed;
         }
+
+        if (string.IsNullOrWhiteSpace(value)
+            && RuntimeRewrites.TryFix(body, out string rewritten))
+            value = rewritten;
 
         if (string.IsNullOrWhiteSpace(value)) return false;
         translation = prefix + value;

@@ -599,14 +599,75 @@ def apply_ui_short(merged: dict[str, str]) -> int:
     return changed
 
 
+def apply_split_lines(merged: dict[str, str]) -> int:
+    """Add single-line aliases for skill/talent text the client splits up.
+
+    The skill panel and the module trait list often feed each line to its own
+    TMP component, so a multi-line key never matches and the English row stays
+    visible. Only macro/tag-bearing rows are split: they are UI descriptions,
+    not story prose, and their line translations are unambiguous.
+    """
+    candidates: dict[str, set[str]] = {}
+    for key, value in merged.items():
+        if not isinstance(key, str) or not isinstance(value, str):
+            continue
+        if "\n" not in key or "\n" not in value or len(key) > 600:
+            continue
+        if "{" not in key and "<@ba." not in key and "<$ba." not in key:
+            continue
+        source_lines = key.split("\n")
+        target_lines = value.split("\n")
+        if len(source_lines) != len(target_lines):
+            continue
+        if any(not (4 <= len(line.strip()) <= 160) for line in source_lines):
+            continue
+        for source, target in zip(source_lines, target_lines):
+            source, target = source.strip(), target.strip()
+            if source and target:
+                candidates.setdefault(source, set()).add(target)
+    added = 0
+    for source, targets in candidates.items():
+        if source in merged or len(targets) != 1:
+            continue
+        merged[source] = next(iter(targets))
+        added += 1
+    return added
+
+
+_DOUBLE_GERMAN = re.compile(r"„([^“\n]{1,400})“")
+_SINGLE_QUOTED = re.compile(r"(?<![A-Za-zА-Яа-яЁё0-9])'([^'\n]{1,400})'(?![A-Za-zА-Яа-яЁё0-9])")
+_DOUBLE_ASCII = re.compile(r'(?<![A-Za-zА-Яа-яЁё0-9])"([^"\n]{1,400})"(?![A-Za-zА-Яа-яЁё0-9])')
+_QUOTE_SPACES = re.compile(r"«\s+|\s+»")
+_LEADING_BULLET = re.compile(r"^[-–]\s+(?=[А-ЯЁ«])")
+_DESTROY_OPERATION = re.compile(
+    r"операци([юия]) на уничтожение\s+([^.,;:!?\n«»]+)", re.IGNORECASE)
+
+
+def _destroy_operation(match: re.Match[str]) -> str:
+    ending, name = match.group(1), match.group(2).strip()
+    return f"операци{ending} «{name}»"
+
+
 def apply_quotes(merged: dict[str, str]) -> int:
-    """Collapse accidentally doubled Russian quotation marks."""
+    """Normalise typography: Russian «ёлочки», dashes and operation names.
+
+    The RU sources and the imported story TSV still contain English single
+    quotes and German „…“ marks. Russian typography uses «…»; the game font
+    has the guillemets and the plugin shrinks the font when they overflow.
+    """
     changed = 0
     for key, value in merged.items():
-        if "««" not in value and "»»" not in value:
+        if not isinstance(value, str):
             continue
         new_value = re.sub(r"«{2,}", "«", value)
         new_value = re.sub(r"»{2,}", "»", new_value)
+        new_value = _DOUBLE_GERMAN.sub(r"«\1»", new_value)
+        for _ in range(2):
+            new_value = _SINGLE_QUOTED.sub(r"«\1»", new_value)
+        new_value = _DOUBLE_ASCII.sub(r"«\1»", new_value)
+        new_value = _QUOTE_SPACES.sub(lambda m: "«" if m.group(0).startswith("«") else "»", new_value)
+        new_value = _DESTROY_OPERATION.sub(_destroy_operation, new_value)
+        new_value = _LEADING_BULLET.sub("", new_value)
         if new_value != value:
             merged[key] = new_value
             changed += 1
@@ -880,6 +941,11 @@ def main() -> int:
     # The canonical faction name is the neuter "Воссоединение"; fix the verb
     # and modifier agreement that the old masculine name left behind.
     apply_reunion_rename(merged)
+
+    # Skill/talent rows are often rendered as one TMP per line. Publish the
+    # line aliases before the short-UI pass so they receive the same rewrites.
+    split_added = apply_split_lines(merged)
+    print(f"split-line aliases added: {split_added}")
 
     # Short UI labels (enemy resistance row, promotion label, base tabs, ...)
     # and the neural-network/Mon3tr/L.G.D. canon.

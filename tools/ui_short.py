@@ -49,6 +49,23 @@ _LATIN_STATS = (
 # ОЗ (очки здоровья) and ХП are the same stat. The community glossary uses ХП.
 _HP_RU = re.compile(r"(?<![А-Яа-яЁё])ОЗ(?![А-Яа-яЁё])")
 _RANK = re.compile(r"\bRANK\b")
+# Skill points are "очки навыков" in the community glossary. The game and the
+# RU source use both the Latin SP and the Cyrillic СП abbreviation.
+_SKILL_POINTS = re.compile(r"(?<![A-Za-zА-Яа-яЁё])[SС][PР](?![A-Za-zА-Яа-яЁё])")
+# "SP" is plural ("очки навыков"), so the adjectives that the old translations
+# agreed with the singular acronym must become plural.
+_SP_AGREEMENT = (
+    ("стартовая ОН", "стартовые ОН"), ("стартовой ОН", "стартовых ОН"),
+    ("стартового ОН", "стартовых ОН"), ("стартовый ОН", "стартовые ОН"),
+    ("стартовое ОН", "стартовые ОН"),
+    ("дополнительное ОН", "дополнительные ОН"),
+    ("дополнительный ОН", "дополнительные ОН"),
+    ("дополнительная ОН", "дополнительные ОН"),
+    ("дополнительного ОН", "дополнительных ОН"),
+    ("полном ОН", "полных ОН"),
+)
+# The promotion badge is assembled in code as "Elite 2Level60" (no space).
+_ELITE_LEVEL = re.compile(r"\bElite\s*(\d)\s*Level\s*(\d+)", re.I)
 
 _NEURAL_PHRASES = (
     ("к нейросети", "к нейромодулю"),
@@ -129,5 +146,9 @@ def rewrite(value: str) -> str:
         value = pattern.sub(target, value)
     value = _HP_RU.sub("ХП", value)
     value = _RANK.sub("РАНГ", value)
+    value = _SKILL_POINTS.sub("ОН", value)
+    for source, target in _SP_AGREEMENT:
+        value = value.replace(source, target)
+    value = _ELITE_LEVEL.sub(lambda m: f"Элита {m.group(1)} Ур. {m.group(2)}", value)
 
     return value

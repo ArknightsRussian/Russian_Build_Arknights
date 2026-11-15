@@ -26,5 +26,17 @@
   "50% chance to dodge Physical and Arts attacks and is less likely to be <@ba.kw>targeted</> by enemies": "С вероятностью 50% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
   "65% chance to dodge Physical and Arts attacks and is less likely to be <@ba.kw>targeted</> by enemies": "С вероятностью 65% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
   "50% chance to dodge Physical and Arts attacks and is less likely to be targeted by enemies": "С вероятностью 50% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
-  "65% chance to dodge Physical and Arts attacks and is less likely to be targeted by enemies": "С вероятностью 65% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов"
+  "65% chance to dodge Physical and Arts attacks and is less likely to be targeted by enemies": "С вероятностью 65% уклоняется от физических атак и атак Искусством, а также с меньшей вероятностью становится целью врагов",
+  "Module details": "Подробности",
+  "Operator Progress": "Прогресс оперативника",
+  "Slightly Slow": "Немн. медленно",
+  "Unlimited duration": "Неограниченная длительность",
+  "Unlimited Duration": "Неограниченная длительность",
+  "ATK <@ba.vup>+{atk:0%}</>; When attacking, has a <@ba.vup>{prob:0%}</> chance to deal <@ba.vup>{atk_scale:0%}</> damage": "АТК +<@ba.vup>{atk:0%}</>; при атаке с вероятностью <@ba.vup>{prob:0%}</> наносит <@ba.vup>{atk_scale:0%}</> урона",
+  "ATK +{atk:0%}; When attacking, has a {prob:0%} chance to deal {atk_scale:0%} damage": "АТК +{atk:0%}; при атаке с вероятностью {prob:0%} наносит {atk_scale:0%} урона",
+  "Can Shift enemies by using skills": "Может отталкивать врагов с помощью навыков",
+  "Can <@ba.kw>Shift</> enemies by using skills": "Может <@ba.kw>отталкивать</> врагов с помощью навыков",
+  "Can be deployed on Ranged Tiles": "Может быть развёрнут на дальних плитках",
+  "Can be deployed on Ranged tiles": "Может быть развёрнут на дальних плитках",
+  "While being pulled, enemies take Arts damage proportional to the distance traveled": "Пока их тянет, враги получают урон Искусством пропорционально пройденному расстоянию"
 }
