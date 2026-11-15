@@ -568,14 +568,17 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             }
         }
 
-        string? value = DynamicTranslations.LookupAny(body);
-        if (string.IsNullOrWhiteSpace(value)
-            && active.TryTranslate(body, out string exact)
+        // Exact rows must win over broad slot templates: "Obtain {0}"
+        // otherwise swallows a medal condition such as
+        // "Obtain Philae and Contrail and raise them to Max Potential (0/2)".
+        string? value = null;
+        if (active.TryTranslate(body, out string exact)
             && !string.IsNullOrWhiteSpace(exact) && exact != body)
             value = exact;
         if (string.IsNullOrWhiteSpace(value)
             && TryTranslateWithRuntimeSuffix(active, body, out string suffixed))
             value = suffixed;
+        if (string.IsNullOrWhiteSpace(value)) value = DynamicTranslations.LookupAny(body);
 
         string dashless = NormalizeDashes(body);
         if (string.IsNullOrWhiteSpace(value) && dashless != body)
@@ -595,6 +598,10 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             value = rewritten;
 
         if (string.IsNullOrWhiteSpace(value)) return false;
+        // Medals arrive as "–Obtain …" (dash glued to the word). Keep the
+        // bullet but separate it so the line reads "– Получить …".
+        if (prefix.Length > 0 && !char.IsWhiteSpace(prefix[prefix.Length - 1]))
+            prefix += " ";
         translation = prefix + value;
         return true;
     }
@@ -607,13 +614,13 @@ public sealed class RichTextTranslationPlugin : BasePlugin
             return false;
         }
         string dashlessBase = NormalizeDashes(baseText);
-        string? value = DynamicTranslations.LookupAny(dashlessBase);
-        if (string.IsNullOrWhiteSpace(value)
-            && active.TryTranslate(dashlessBase, out string baseTranslation)
+        string? value = null;
+        if (active.TryTranslate(dashlessBase, out string baseTranslation)
             && !string.IsNullOrWhiteSpace(baseTranslation) && baseTranslation != dashlessBase)
         {
             value = baseTranslation;
         }
+        if (string.IsNullOrWhiteSpace(value)) value = DynamicTranslations.LookupAny(dashlessBase);
         if (string.IsNullOrWhiteSpace(value))
         {
             return false;

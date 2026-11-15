@@ -92,6 +92,29 @@ _DROP_WORDS = (
     ("Дропа", "Награды"), ("Дропу", "Награде"), ("Дропом", "Наградой"),
 )
 _DROP_LEFT = re.compile(r"(?<![А-Яа-яЁё])[Дд]роп(?![А-Яа-яЁё])")
+# Enemy/banner names that the glossary does not cover. Bracketed ones keep
+# their brackets (the same convention as <Term>), so the text stays italic.
+_BRACKET_PHRASES = (
+    ("[Woe of Extinction]", "[Горе истребления]"),
+    ("[Sword and Hammer of Olden Days]", "[Меч и молот минувших дней]"),
+    ("[Standard Headhunting]", "[Стандартный наем]"),
+    ("[Limited Headhunting]", "[Лимитный наем]"),
+    ("[Special Headhunting]", "[Особый наем]"),
+    ("[Kernel Headhunting]", "[Наем «Ядра»]"),
+    ("[Newbie Pool]", "[Наем новичка]"),
+)
+# One spelling per mechanic/boss unit.
+_NAME_FIXES = (
+    ("OpFor:", "Противник:"),
+    ("Armor Cleaver", "Расколыватель брони"),
+    ("Armor Crusher", "Крушитель брони"),
+    ("Раскол доспеха", "Расколыватель брони"),
+    ("Крушитель доспеха", "Крушитель брони"),
+    ("Пробиватель брони", "Пронзатель брони"),
+)
+# Compression for narrow skill/talent cards. Only unambiguous patterns.
+_ASPD_COMPRESS = re.compile(r"[Сс]корость атаки(?=\s*[+\-−])")
+_DAMAGE_COMPRESS = re.compile(r"(урон[а]?) в размере ([^\s,.;]+) от АТК")
 
 _NEURAL_PHRASES = (
     ("к нейросети", "к нейромодулю"),
@@ -182,6 +205,14 @@ def rewrite(value: str) -> str:
     value = _UNAVAILABLE.sub("НЕУЯЗ: ", value)
     value = _SECONDS.sub("с.", value)
     value = _DEPLOY_POINTS.sub("ОД", value)
+
+    for source, target in _BRACKET_PHRASES:
+        value = value.replace(source, target)
+    for source, target in _NAME_FIXES:
+        value = value.replace(source, target)
+
+    value = _ASPD_COMPRESS.sub("СКОР", value)
+    value = _DAMAGE_COMPRESS.sub(r"\1 \2 АТК", value)
 
     for source, target in _DROP_PHRASES:
         value = value.replace(source, target)

@@ -504,6 +504,17 @@ def apply_angle_terms(merged: dict[str, str]) -> int:
         return 0
     data = json.loads(ANGLE_TERMS_FILE.read_text(encoding="utf-8"))
     ANGLE_TERMS = {str(k): str(v) for k, v in data.items()}
+    # The community glossary also names factions and places that only ever
+    # appear inside [brackets]; merge it so both markers resolve the same way.
+    if GOOGLE_GLOSSARY_FILE.is_file():
+        try:
+            google = json.loads(GOOGLE_GLOSSARY_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            google = {}
+        for term, translated in google.items():
+            term, translated = str(term), str(translated)
+            if 1 < len(term) <= 60 and not any(ch in term for ch in "[]<>{}"):
+                ANGLE_TERMS.setdefault(term, translated)
     for term, translated in BRACKET_EXTRA.items():
         ANGLE_TERMS.setdefault(term, translated)
     ANGLE_TERMS_FOLDED = {k.casefold(): v for k, v in ANGLE_TERMS.items()}

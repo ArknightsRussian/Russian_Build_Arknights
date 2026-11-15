@@ -228,17 +228,25 @@ def main() -> int:
     # Attack/redeploy speed tiers are quoted labels, not status effects. The old
     # translations reused "Замедление" (the Slow debuff) next to a numeric stat;
     # the panel expects the tier adjective.
-    speed_labels = {
-        "Normal": "Обычная", "Average": "Средняя", "Slightly Fast": "Повышена",
+    # "Скорость атаки" is feminine, "развёртывание" is neuter, so the same tier
+    # needs different adjective endings in the two panels.
+    attack_speed_labels = {
+        "Normal": "Нормальная", "Average": "Средняя", "Slightly Fast": "Повышена",
         "Fast": "Высокая", "Slightly Slow": "Снижена", "Slow": "Низкая",
         "Very Fast": "Очень высокая", "Very Slow": "Очень низкая",
     }
-    for name in ("attack-speed", "redeploy-speed"):
+    redeploy_speed_labels = {
+        "Normal": "Нормальное", "Average": "Среднее", "Slightly Fast": "Повышено",
+        "Fast": "Высокое", "Slightly Slow": "Снижено", "Slow": "Низкое",
+        "Very Fast": "Очень высокое", "Very Slow": "Очень низкое",
+    }
+    for name, labels in (("attack-speed", attack_speed_labels),
+                         ("redeploy-speed", redeploy_speed_labels)):
         path = OUT_FOLDER / (name + ".json")
         if not path.is_file():
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
-        for source, target in speed_labels.items():
+        for source, target in labels.items():
             if source in data:
                 data[source] = target
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -247,9 +255,13 @@ def main() -> int:
     if id_path.is_file():
         ids = json.loads(id_path.read_text(encoding="utf-8"))
         for domain, entries in ids.items():
-            if "ATK_SPEED" not in domain and "RESPAWN" not in domain:
+            if "ATK_SPEED" in domain:
+                labels = attack_speed_labels
+            elif "RESPAWN" in domain:
+                labels = redeploy_speed_labels
+            else:
                 continue
-            for source, target in speed_labels.items():
+            for source, target in labels.items():
                 if source in entries:
                     entries[source] = target
         id_path.write_text(json.dumps(ids, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
