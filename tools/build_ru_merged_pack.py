@@ -650,6 +650,149 @@ def apply_ui_short(merged: dict[str, str]) -> int:
     return changed
 
 
+# The skill "Specialization" system is called "Мастерство" in the RU client.
+# Only skill-training rows are rewritten: "specialty" in flavour text and the
+# "Specialized Badge"/"Specialized Appointment" items keep their wording.
+_SKILL_MASTERY_KEY = re.compile(
+    r"skill\s+speciali[sz]ation"
+    r"|speciali[sz]ation\s+(?:level|levels|missions?|training|starts)"
+    r"|reach skill speciali[sz]ation"
+    r"|speciali[sz]e\s+skill"
+    r"|^speciali[sz]ation(?:\s+\{0\})?$"
+    r"|^speciali[sz]e$"
+    r"|CharSkillSpecCount",
+    re.I)
+_MASTERY_EXACT = {
+    "Specialization": "Мастерство",
+    "Specialization {0}": "Мастерство {0}",
+    "Specialize": "Мастерство",
+    "Specialize skill": "Мастерство Навыка",
+    "Specialization starts": "Начато мастерство",
+    "CharSkillSpecCount": "Количество мастерств навыков",
+    "Go to {0}:{1} to unlock Specialization missions":
+        "Перейди на {0}:{1}, чтобы открыть миссии мастерства",
+    "No Operator can take the Specialization training with this item":
+        "С этим предметом ни один Оперативник не может пройти обучение мастерству",
+    "No Operators are able to take the Specialization training.":
+        "Нет Оперативников, способных пройти обучение мастерству.",
+    "Please increase {0} level to unlock the next Specialization Level":
+        "Повысьте уровень {0}, чтобы открыть следующий уровень мастерства",
+    "Reach Elite 2 for Skill Specialization.":
+        "Достигните Элиты 2 для Мастерства Навыков.",
+    "Skill Specialization Level Restricted":
+        "Ограничено уровнем мастерства Навыка",
+    "Skill Specialization takes time and you can only Specialize one skill at a time.":
+        "Мастерство навыка требует времени, и за раз можно повышать мастерство только одного навыка.",
+    "Skill specialization in progress; Unable to use Class Conversion.":
+        "Идёт изучение мастерства Навыка; смена класса недоступна.",
+    "Once a Skill reaches Level 7, you can tap here to enter the Skill Specialization page and Specialize each skill.":
+        "Когда Навык достигнет 7 уровня, нажмите здесь, чтобы открыть страницу Мастерства Навыков и повышать мастерство каждого навыка.",
+}
+_MASTERY_WORDS = (
+    ("Специализации", "Мастерства"),
+    ("специализации", "мастерства"),
+    ("Специализацию", "Мастерство"),
+    ("специализацию", "мастерство"),
+    ("Специализацией", "Мастерством"),
+    ("специализацией", "мастерством"),
+    ("Специализация", "Мастерство"),
+    ("специализация", "мастерство"),
+    ("специализировать каждый навык", "повышать мастерство каждого навыка"),
+)
+
+
+def apply_skill_mastery(merged: dict[str, str]) -> int:
+    """Rename the skill Specialization system to "Мастерство"."""
+    changed = 0
+    for key, value in list(merged.items()):
+        if not isinstance(key, str) or not isinstance(value, str):
+            continue
+        if len(key) > 200 or "specialization?" in key.lower():
+            continue
+        if not _SKILL_MASTERY_KEY.search(key):
+            continue
+        new_value = _MASTERY_EXACT.get(key)
+        if new_value is None:
+            new_value = value
+            for source, target in _MASTERY_WORDS:
+                new_value = new_value.replace(source, target)
+        if new_value != value:
+            merged[key] = new_value
+            changed += 1
+    print(f"skill mastery terms: {changed} values rewritten")
+    return changed
+
+
+_EN_STAT_TOKEN = re.compile(r"\b(DP|SP)\b")
+_RU_STAT_ABBR = re.compile(r"(?<![А-Яа-яЁё])(?:ОП|ОВ|ОО|СП|ОД)(?![А-Яа-яЁё])")
+
+# Spellings that the old draft used for the skill-point cost. They only make
+# sense in a row that has SP but no DP (otherwise both stats are in the row and
+# the DP reading is legitimate).
+_SP_COST_FIXES = (
+    ("Затраты ОД", "Затраты ОН"),
+    ("стоимость ОД", "стоимость ОН"),
+    ("Стоимость ОД", "Стоимость ОН"),
+    ("стоимости ОД", "стоимости ОН"),
+    ("стоимость ХП", "стоимость ОН"),
+    ("Стоимости ХП", "Стоимости ОН"),
+    ("стоимости ХП", "стоимости ОН"),
+    ("стоимость ОЗ", "стоимость ОН"),
+    ("Стоимость ОЗ", "Стоимость ОН"),
+    ("стоимости ОЗ", "стоимости ОН"),
+    ("старт. ОД", "старт. ОН"),
+    ("Стоимость Навыков", "Стоимость ОН навыков"),
+)
+
+
+def apply_stat_abbreviations(merged: dict[str, str]) -> int:
+    """Normalize the legacy ОП/ОВ/ОО/СП/ОД abbreviations to ОН/ОВ.
+
+    The old RU draft used several different two-letter forms for the same
+    mechanic, and sometimes the same form for both. The English source is
+    unambiguous, so the replacement is driven by the DP/SP tokens in the key,
+    matched to the abbreviations in the value in order of appearance.
+    """
+    changed = 0
+    for key, value in list(merged.items()):
+        if not isinstance(key, str) or not isinstance(value, str):
+            continue
+        if len(key) > 600:
+            continue
+        english = [m.group(1) for m in _EN_STAT_TOKEN.finditer(key)]
+        if not english:
+            continue
+        result = value
+        if "SP" in english and "DP" not in english:
+            for source, target in _SP_COST_FIXES:
+                result = result.replace(source, target)
+        matches = list(_RU_STAT_ABBR.finditer(result))
+        # Rebuild from right to left so the spans stay valid.
+        for i in range(len(matches) - 1, -1, -1):
+            stat = english[i] if i < len(english) else english[-1]
+            target = "ОН" if stat == "SP" else "ОВ"
+            match = matches[i]
+            result = result[:match.start()] + target + result[match.end():]
+        if result != value:
+            merged[key] = result
+            changed += 1
+
+    # A handful of rows in the old draft lost the stat name entirely.
+    for key, value in list(merged.items()):
+        if not isinstance(value, str):
+            continue
+        fixed = value.replace(
+            "При броске ОП Оперативников, размещённых на крайних левых Странных клетках, +100%",
+            "При броске Оперативники на крайних левых Странных клетках получают +100%")
+        fixed = fixed.replace("когда ОП этого юнита ниже", "когда ХП этого юнита ниже")
+        fixed = fixed.replace("его ОП упасть", "его ХП упасть")
+        if fixed != value:
+            merged[key] = fixed
+            changed += 1
+    print(f"stat abbreviations normalized: {changed} values rewritten")
+    return changed
+
+
 def apply_split_lines(merged: dict[str, str]) -> int:
     """Add single-line aliases for skill/talent text the client splits up.
 
@@ -1006,6 +1149,14 @@ def main() -> int:
     # The aliases above are new values: run the bracket/angle glossary on them
     # as well so "[Sargon]"-style references inside them are not left English.
     apply_angle_terms(merged)
+
+    # SP/DP are abbreviated inconsistently in the old RU draft (ОН/ОП/ОВ/ОО/СП).
+    # Normalize them using the English key as the disambiguator, before the
+    # agreement rules in ui_short so "стартовая ОН" becomes "стартовые ОН".
+    apply_stat_abbreviations(merged)
+
+    # Skill Specialization ("Специализация") is called "Мастерство" in RU.
+    apply_skill_mastery(merged)
 
     # Short UI labels (enemy resistance row, promotion label, base tabs, ...)
     # and the neural-network/Mon3tr/L.G.D. canon.

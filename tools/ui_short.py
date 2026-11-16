@@ -63,6 +63,17 @@ _SP_AGREEMENT = (
     ("дополнительная ОН", "дополнительные ОН"),
     ("дополнительного ОН", "дополнительных ОН"),
     ("полном ОН", "полных ОН"),
+    ("Увеличена стартовые ОН", "Повышены стартовые ОН"),
+    ("увеличена стартовые ОН", "повышены стартовые ОН"),
+)
+# "ОВ" is plural as well ("очки высадки"), so the same agreement fixes apply.
+_OV_AGREEMENT = (
+    ("стартовая ОВ", "стартовые ОВ"), ("стартовой ОВ", "стартовых ОВ"),
+    ("стартового ОВ", "стартовых ОВ"), ("стартовый ОВ", "стартовые ОВ"),
+    ("стартовое ОВ", "стартовые ОВ"), ("стартовому ОВ", "стартовым ОВ"),
+    ("начальная ОВ", "начальные ОВ"), ("начальной ОВ", "начальных ОВ"),
+    ("начального ОВ", "начальных ОВ"), ("начальный ОВ", "начальные ОВ"),
+    ("начальное ОВ", "начальные ОВ"),
 )
 # The promotion badge is assembled in code as "Elite 2Level60" (no space).
 _ELITE_LEVEL = re.compile(r"\bElite\s*(\d)\s*Level\s*(\d+)", re.I)
@@ -74,7 +85,7 @@ _SP_DOUBLE = re.compile(r"ОН\s*\((?:ОН|[Оо]чки навыков)\)")
 _UNAVAILABLE = re.compile(r"НЕУЯЗ\.\s*")
 # Seconds are abbreviated with the short "с." everywhere in the UI.
 _SECONDS = re.compile(r"(?<![А-Яа-яЁёA-Za-z])сек\.")
-# Deployment points are "очки развёртывания" in the community glossary.
+# Deployment points are "очки высадки" in the community glossary.
 _DEPLOY_POINTS = re.compile(r"(?<![A-Za-zА-Яа-яЁё])(?:DP|ДП)(?![A-Za-zА-Яа-яЁё])")
 # "дроп" is gamer slang; the UI calls these rewards.
 _DROP_PHRASES = (
@@ -92,6 +103,8 @@ _DROP_WORDS = (
     ("Дропа", "Награды"), ("Дропу", "Награде"), ("Дропом", "Наградой"),
 )
 _DROP_LEFT = re.compile(r"(?<![А-Яа-яЁё])[Дд]роп(?![А-Яа-яЁё])")
+# "Наем" is the noun "hiring"; the correct spelling is "наём".
+_NAEM = re.compile(r"(?<![А-Яа-яЁё])[Нн]аем(?![А-Яа-яЁё])")
 # Enemy/banner names that the glossary does not cover. Bracketed ones keep
 # their brackets (the same convention as <Term>), so the text stays italic.
 _BRACKET_PHRASES = (
@@ -111,6 +124,7 @@ _NAME_FIXES = (
     ("Раскол доспеха", "Расколыватель брони"),
     ("Крушитель доспеха", "Крушитель брони"),
     ("Пробиватель брони", "Пронзатель брони"),
+    ("Восстановление ОВ при блокировке", "Восстановление ОН при блокировке"),
 )
 # Compression for narrow skill/talent cards. Only unambiguous patterns.
 _ASPD_COMPRESS = re.compile(r"[Сс]корость атаки(?=\s*[+\-−])")
@@ -200,14 +214,21 @@ def rewrite(value: str) -> str:
     value = _SP_DOUBLE.sub("ОН", value)
     for source, target in _SP_AGREEMENT:
         value = value.replace(source, target)
+    for source, target in _OV_AGREEMENT:
+        value = value.replace(source, target)
     value = _ELITE_LEVEL.sub(lambda m: f"Элита {m.group(1)} Ур. {m.group(2)}", value)
 
     value = _UNAVAILABLE.sub("НЕУЯЗ: ", value)
     value = _SECONDS.sub("с.", value)
-    value = _DEPLOY_POINTS.sub("ОД", value)
+    value = _DEPLOY_POINTS.sub("ОВ", value)
+    # DP may arrive inside a value ("+3 стартовой DP"), so fix the agreement
+    # after it has been turned into ОВ.
+    for source, target in _OV_AGREEMENT:
+        value = value.replace(source, target)
 
     for source, target in _BRACKET_PHRASES:
         value = value.replace(source, target)
+    value = _NAEM.sub(lambda m: "Наём" if m.group(0)[0].isupper() else "наём", value)
     for source, target in _NAME_FIXES:
         value = value.replace(source, target)
 
